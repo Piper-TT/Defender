@@ -6,24 +6,24 @@
 #include <functional>
 using namespace std;
 
-//TODO:ĞèÒª°Ñ²ÎÊıÒ²×÷Îª¿É±äÄ£°å°ü´«½øÀ´
-//Êµ¼Ê´¦ÀíµÄÊ±ºò£¬²»ĞèÒª¿É±ä²ÎÊı°ü£¬Ö±½ÓÍ¨¹ıLambada±í´ïÊ½²¶»ñ¼´¿É£¬ËùÒÔÕâÀïµÄArgs...Ã»ÓĞÊµ¼Ê×÷ÓÃ
+//TODO:éœ€è¦æŠŠå‚æ•°ä¹Ÿä½œä¸ºå¯å˜æ¨¡æ¿åŒ…ä¼ è¿›æ¥
+//å®é™…å¤„ç†çš„æ—¶å€™ï¼Œä¸éœ€è¦å¯å˜å‚æ•°åŒ…ï¼Œç›´æ¥é€šè¿‡Lambadaè¡¨è¾¾å¼æ•è·å³å¯ï¼Œæ‰€ä»¥è¿™é‡Œçš„Args...æ²¡æœ‰å®é™…ä½œç”¨
 template<typename... Args>
 struct Task
 {
-	uint64_t id;						// É¾³ıÈÎÎñÊ±£¬ĞèÒª¸ù¾İ´ËidÕÒµ½±»É¾µÄÈÎÎñ
-	uint64_t period;					// Ö´ĞĞµÄÖÜÆÚ£¬Ìí¼ÓÈÎÎñÊ±ÓÃÀ´¼ÆËã¸ÃÈÎÎñµÄÖ´ĞĞÊ±¿Ì
-	bool repeated;						// ÊÇ·ñÎªÖØ¸´µÄÈÎÎñ
-	std::function<void(Args...)> func;  // ÈÎÎñ¾ßÌåÊµÏÖ
-	bool removed;						// ÈÎÎñÊÇ·ñÒÑ±»É¾³ı
-	//Args && ...args;					// ÈÎÎñµÄ²ÎÊı
+	uint64_t id;						// åˆ é™¤ä»»åŠ¡æ—¶ï¼Œéœ€è¦æ ¹æ®æ­¤idæ‰¾åˆ°è¢«åˆ çš„ä»»åŠ¡
+	uint64_t period;					// æ‰§è¡Œçš„å‘¨æœŸï¼Œæ·»åŠ ä»»åŠ¡æ—¶ç”¨æ¥è®¡ç®—è¯¥ä»»åŠ¡çš„æ‰§è¡Œæ—¶åˆ»
+	bool repeated;						// æ˜¯å¦ä¸ºé‡å¤çš„ä»»åŠ¡
+	std::function<void(Args...)> func;  // ä»»åŠ¡å…·ä½“å®ç°
+	bool removed;						// ä»»åŠ¡æ˜¯å¦å·²è¢«åˆ é™¤
+	//Args && ...args;					// ä»»åŠ¡çš„å‚æ•°
 	Task(uint64_t id, uint64_t period, bool repeated, std::function<void(Args...)> func)
 		: id(id), period(period), repeated(repeated), func(func), removed(false)
 	{
 	}
 };
 
-//¶¨Ê±Æ÷£¬¿ÉÓÃÓÚ¶¨Ê±¼ì²âÄ³Ò»½ø³ÌÊÇ·ñ´æÔÚ£¬¶¨Ê±Ö´ĞĞÄ³Ò»º¯ÊıµÈ
+//å®šæ—¶å™¨ï¼Œå¯ç”¨äºå®šæ—¶æ£€æµ‹æŸä¸€è¿›ç¨‹æ˜¯å¦å­˜åœ¨ï¼Œå®šæ—¶æ‰§è¡ŒæŸä¸€å‡½æ•°ç­‰
 template<typename... Args>
 class Timer
 {
@@ -68,8 +68,8 @@ private:
 		}
 	}
 public:
-	Timer(const Timer&) = delete;			  // ½ûÓÃ¿½±´¹¹Ôìº¯Êı
-	Timer& operator=(const Timer&) = delete;  // ½ûÓÃ¿½±´¸³ÖµÔËËã·û
+	Timer(const Timer&) = delete;			  // ç¦ç”¨æ‹·è´æ„é€ å‡½æ•°
+	Timer& operator=(const Timer&) = delete;  // ç¦ç”¨æ‹·è´èµ‹å€¼è¿ç®—ç¬¦
 	Timer() : m_stop(false), m_cur_id(0)
 	{
 		m_worker = std::thread(&Timer<Args ...>::run, this);

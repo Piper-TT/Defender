@@ -5,19 +5,18 @@
 #include <unordered_map>
 #include <tchar.h>
 #include <fstream>
-#include <filesystem>   //C++17
+#include <filesystem>            // C++17
 
-namespace fs = boost::filesystem;  //Boost¿â
-using namespace std;
-class FileOperationHelper
-{
+namespace fs = std::filesystem;  // ä½¿ç”¨ STL çš„ filesystem
+class FileOperationHelper {
 public:
-	FileOperationHelper() {};
-	~FileOperationHelper() {};
+    FileOperationHelper() {};
+    ~FileOperationHelper() {};
+
 public:
-	static BOOL SeFileCopy(std::string& strDestFilePath, std::string& strSrcFilePath, BOOL bOverwrite, std::string& strError);
-	static std::uintmax_t SeGetFileSize(const std::string& strFilePath, std::string& strError);
-	static BOOL SeEnumFile(const std::string strFileName, std::unordered_map<std::string, int>& FileMapViews);
-	static BOOL SeWriteFile(const std::string strFilePath, const std::string strBuffer, unsigned int iLength);
-	static BOOL FetchXFromDir(std::list<std::wstring>& lstFiles,const std::wstring& strDir, const std::wstring& strSuffix);
+    static BOOL           SeFileCopy(std::string& strDestFilePath, std::string& strSrcFilePath, BOOL bOverwrite, std::string& strError);
+    static std::uintmax_t SeGetFileSize(const std::string& strFilePath, std::string& strError);
+    static BOOL           SeEnumFile(const std::string strFileName, std::unordered_map<std::string, int>& FileMapViews);
+    static BOOL           SeWriteFile(const std::string strFilePath, const std::string strBuffer, unsigned int iLength);
+    static BOOL           FetchXFromDir(std::list<std::wstring>& lstFiles, const std::wstring& strDir, const std::wstring& strSuffix);
 };

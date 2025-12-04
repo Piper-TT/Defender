@@ -1,63 +1,50 @@
 #include "FileScan.h"
 
-CFileScan::CFileScan()
-{
-	return;
+CFileScan::CFileScan() {
+    return;
 }
 
-CFileScan::~CFileScan()
-{
+CFileScan::~CFileScan() {}
+
+CFileScan& CFileScan::GetInstance() {
+    static CFileScan instance;
+    return instance;
 }
 
-CFileScan& CFileScan::GetInstance()
-{
-	static CFileScan instance;
-	return instance;
+DWORD CFileScan::UnRegister() {
+    return 0;
 }
 
-
-DWORD CFileScan::UnRegister()
-{
-	return 0;
+IComponent* CFileScan::Register() {
+    return nullptr;
 }
 
-IComponent* CFileScan::Register()
-{
-	return nullptr;
+BOOL CFileScan::EnableFunction() {
+    // å¼€å¯æ–‡ä»¶æ‰«æåŠŸèƒ½,éžå•ä¾‹
+    CFileScanFun* FileScan = new CFileScanFun();
+    FileScan->EnableScanFileFunction();
+    return 0;
 }
 
-BOOL CFileScan::EnableFunction()
-{
-	// ¿ªÆôÎÄ¼þÉ¨Ãè¹¦ÄÜ,·Çµ¥Àý
-	CFileScanFun *FileScan = new CFileScanFun();
-	FileScan->EnableScanFileFunction();
-	return 0;
+BOOL CFileScan::DisableFunction() {
+    return 0;
 }
 
-BOOL CFileScan::DisableFunction()
-{
-	return 0;
+BOOL CFileScan::DispatchMessages(IPC_MSG_DATA* pIpcMsg) {
+    std::string strData(reinterpret_cast<char*>(pIpcMsg->Data), pIpcMsg->dwSize);
+    switch (pIpcMsg->dwMsgCode) {
+        case FILESCAN_CONTROL_OPEN_ALL_FUNCTION:
+            EnableFunction();
+            break;
+        case FILESCAN_CONTROL_CLOSE_ALL_FUNCTION:
+            DisableFunction();
+            break;
+    }
+    return 0;
 }
 
-BOOL CFileScan::DispatchMessages(IPC_MSG_DATA* pIpcMsg)
-{
-	std::string strData(reinterpret_cast<char*>(pIpcMsg->Data), pIpcMsg->dwSize);
-	switch (pIpcMsg->dwMsgCode)
-	{
-	case FILESCAN_CONTROL_OPEN_ALL_FUNCTION:
-		EnableFunction();
-		break;
-	case FILESCAN_CONTROL_CLOSE_ALL_FUNCTION:
-		DisableFunction();
-		break;
-	}
-	return 0;
+// è¿™æ˜¯å¯¼å‡ºå‡½æ•°çš„ä¸€ä¸ªç¤ºä¾‹ã€‚
+FILESCANCONTROL_EXPORTS IComponent* GetComInstance() {
+    WriteInfo("Welcome to FileScanControl!");
+    return &CFileScan::GetInstance();
 }
-
-// ÕâÊÇµ¼³öº¯ÊýµÄÒ»¸öÊ¾Àý¡£
-FILESCANCONTROL_EXPORTS IComponent* GetComInstance()
-{
-	WriteInfo("Welcome to FileScanControl!");
-	return &CFileScan::GetInstance();
-}
-

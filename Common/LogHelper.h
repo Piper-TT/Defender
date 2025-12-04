@@ -12,7 +12,7 @@
 #define __FILENAME__ (strrchr(__FILE__, '/') ? (strrchr(__FILE__, '/') + 1):__FILE__)
 #endif
 
-//¶¨ÒåÒ»¸öÔÚÈÕÖ¾ºóÌí¼Ó ÎÄ¼şÃû º¯ÊıÃû ĞĞºÅ µÄºê¶¨Òå
+//å®šä¹‰ä¸€ä¸ªåœ¨æ—¥å¿—åæ·»åŠ  æ–‡ä»¶å å‡½æ•°å è¡Œå· çš„å®å®šä¹‰
 #ifndef suffix
 #define suffix(msg)  std::string("[") \
         .append(__FILENAME__).append("::").append(__func__) \

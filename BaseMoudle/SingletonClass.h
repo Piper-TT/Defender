@@ -17,19 +17,19 @@ public:
 	}
 	*/
 
-	//C++11 �ֲ���̬�����ĳ�ʼ������֤Ϊ�̰߳�ȫ,һ����õ���˫�ؼ������
+	//C++11 局部静态变量的初始化被保证为线程安全,一般采用的是双重检查锁定
 	/*
-	˫�ؼ�������Ļ���˼���ǣ��ڵ�һ�η��ʾֲ���̬����ʱ�����ȼ������Ƿ��ѱ���ʼ����
-	����Ѿ���ʼ����ֱ�ӷ��ظ�ʵ���������δ��ʼ������ʹ�û�������mutex���Դ������ͬ����
-	ȷ��ֻ��һ���߳�ִ�г�ʼ�������������߳��ڻ������ϵȴ�������ʼ����ɺ�
-	�����ٴμ������Ƿ��ѱ���ʼ����Ȼ���ȡ���ѳ�ʼ����ʵ��
+	双重检查锁定的基本思想是，在第一次访问局部静态变量时，首先检查变量是否已被初始化。
+	如果已经初始化，直接返回该实例；如果尚未初始化，则使用互斥锁（mutex）对代码进行同步，
+	确保只有一个线程执行初始化操作。其他线程在互斥锁上等待，待初始化完成后，
+	它们再次检查变量是否已被初始化，然后获取到已初始化的实例
 	*/
 	static T& GetInstance() {
 		static T instance;
 		return instance;
 	}
 	Singleton(const Singleton&) = delete;
-	Singleton& operator=(const Singleton&) = delete;    //��ֹ�û����ÿ������캯��
-	Singleton()  = default;                              //��ʾָ�����������ɸú�����Ĭ�ϰ汾
+	Singleton& operator=(const Singleton&) = delete;    //阻止用户错用拷贝构造函数
+	Singleton()  = default;                              //显示指定编译器生成该函数的默认版本
 	~Singleton() = default;
 };

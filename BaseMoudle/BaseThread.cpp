@@ -61,7 +61,7 @@ BOOL CWLBaseThread::SecureStopThread(DWORD dwWaitTime, BOOL bForceStop)
 				DWORD dwWaitResult = ::WaitForSingleObject(m_hThread, dwWaitTime);
 				if (WAIT_TIMEOUT == dwWaitResult || WAIT_FAILED == dwWaitResult)
 				{
-                    // Èç¹ûÉèÖÃ bForceStop = TRUE£¬»áÇ¿ÖÆÉ±ËÀÏß³Ì£¬ÓĞ¿ÉÄÜµ¼ÖÂ²¿·Ö×ÊÔ´Ã»ÓĞÊÍ·Å¸É¾»£¬Ôì³ÉÒì³£¡£
+                    // å¦‚æœè®¾ç½® bForceStop = TRUEï¼Œä¼šå¼ºåˆ¶æ€æ­»çº¿ç¨‹ï¼Œæœ‰å¯èƒ½å¯¼è‡´éƒ¨åˆ†èµ„æºæ²¡æœ‰é‡Šæ”¾å¹²å‡€ï¼Œé€ æˆå¼‚å¸¸ã€‚
 					if (bForceStop)
 					{	// Terminate the thread forcedly since it can't exit by itself.
 						if (::TerminateThread(m_hThread, dwExitCode))

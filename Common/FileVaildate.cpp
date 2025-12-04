@@ -6,7 +6,7 @@
 
 void startTime(LARGE_INTEGER& start)
 {
-	// ¿ªÊ¼¼ÆÊ±
+	// å¼€å§‹è®¡æ—¶
 	QueryPerformanceCounter(&start);
 }
 
@@ -16,12 +16,12 @@ double endTime(LARGE_INTEGER& start)
 	double elapsedTime;
 
 	LARGE_INTEGER frequency;
-	// »ñÈ¡¸ß¾«¶È¼ÆÊ±Æ÷µÄÆµÂÊ
+	// è·å–é«˜ç²¾åº¦è®¡æ—¶å™¨çš„é¢‘ç‡
 	QueryPerformanceFrequency(&frequency);
-	// Í£Ö¹¼ÆÊ±
+	// åœæ­¢è®¡æ—¶
 	QueryPerformanceCounter(&end);
 
-	// ¼ÆËã¾­¹ıµÄÊ±¼ä£¨ÒÔÎ¢ÃëÎªµ¥Î»£©
+	// è®¡ç®—ç»è¿‡çš„æ—¶é—´ï¼ˆä»¥å¾®ç§’ä¸ºå•ä½ï¼‰
 	elapsedTime = (double)(end.QuadPart - start.QuadPart) * 1000000.0 / frequency.QuadPart;
 
 	return elapsedTime;

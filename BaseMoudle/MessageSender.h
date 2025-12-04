@@ -3,45 +3,45 @@
 #include "IPCMmf.h"
 
 //////////////////////////////////////////////////////////////////////////
-/*¿Í»§¶ËÏÔÊ¾½çÃæ½ø³ÌµÄIPCÍ¨ÐÅµÄÏûÏ¢Âë*/
-#define CLIENT_MSG_CODE_DEVICE_CONTROL							0x01	/**< ÍâÉè·À»¤¹¦ÄÜIPCÊÂ¼þID*/
-#define CLIENT_MSG_CODE_SYSTEMLOG_CONTROL						0x02	/**< ²Ù×÷ÏµÍ³ÈÕÖ¾IPCÊÂ¼þID*/
-#define CLIENT_MSG_CODE_FILESCAN_CONTROL						0x03	/**< É¨ÃèÎÄ¼þ¹¦ÄÜIPCÊÂ¼þID*/
-#define CLIENT_MSG_CODE_FIREWALL_CONTROL						0x04	/**< ·À»ðÇ½¹¦ÄÜIPCÊÂ¼þID*/
-#define CLIENT_MSG_CODE_CLIPBOARD_CONTROL						0x05	/**< ¼ôÌù°å¹¦ÄÜIPCÊÂ¼þID*/
-/*<ÍâÉè¿ØÖÆÃüÁîÏûÏ¢>µÄÊÂ¼þÀàÐÍ £¨CLIENT_MSG_CODE_DEVICE_CONTROL_MESSAGECODE£©*/
+/*å®¢æˆ·ç«¯æ˜¾ç¤ºç•Œé¢è¿›ç¨‹çš„IPCé€šä¿¡çš„æ¶ˆæ¯ç */
+#define CLIENT_MSG_CODE_DEVICE_CONTROL							0x01	/**< å¤–è®¾é˜²æŠ¤åŠŸèƒ½IPCäº‹ä»¶ID*/
+#define CLIENT_MSG_CODE_SYSTEMLOG_CONTROL						0x02	/**< æ“ä½œç³»ç»Ÿæ—¥å¿—IPCäº‹ä»¶ID*/
+#define CLIENT_MSG_CODE_FILESCAN_CONTROL						0x03	/**< æ‰«ææ–‡ä»¶åŠŸèƒ½IPCäº‹ä»¶ID*/
+#define CLIENT_MSG_CODE_FIREWALL_CONTROL						0x04	/**< é˜²ç«å¢™åŠŸèƒ½IPCäº‹ä»¶ID*/
+#define CLIENT_MSG_CODE_CLIPBOARD_CONTROL						0x05	/**< å‰ªè´´æ¿åŠŸèƒ½IPCäº‹ä»¶ID*/
+/*<å¤–è®¾æŽ§åˆ¶å‘½ä»¤æ¶ˆæ¯>çš„äº‹ä»¶ç±»åž‹ ï¼ˆCLIENT_MSG_CODE_DEVICE_CONTROL_MESSAGECODEï¼‰*/
 enum CLIENT_MSG_CODE_DEVICE_CONTROL_MESSAGECODE
 {
-	DEVICE_CONTROL_OPEN_ALL_FUNCTION = 1,												/**<  ¿ªÆôËùÓÐ¹¦ÄÜ */
-	DEVICE_CONTROL_CLOSE_ALL_FUNCTION,												/**<  ¹Ø±ÕËùÓÐ¹¦ÄÜ */
+	DEVICE_CONTROL_OPEN_ALL_FUNCTION = 1,												/**<  å¼€å¯æ‰€æœ‰åŠŸèƒ½ */
+	DEVICE_CONTROL_CLOSE_ALL_FUNCTION,												/**<  å…³é—­æ‰€æœ‰åŠŸèƒ½ */
 };
 
-/*<²Ù×÷ÏµÍ³ÈÕÖ¾ÃüÁîÏûÏ¢>µÄÊÂ¼þÀàÐÍ £¨CLIENT_MSG_CODE_DEVICE_CONTROL_MESSAGECODE£©*/
+/*<æ“ä½œç³»ç»Ÿæ—¥å¿—å‘½ä»¤æ¶ˆæ¯>çš„äº‹ä»¶ç±»åž‹ ï¼ˆCLIENT_MSG_CODE_DEVICE_CONTROL_MESSAGECODEï¼‰*/
 enum CLIENT_MSG_CODE_SYSTEMLOG_CONTROL_MESSAGECODE
 {
-	SYSTEMLOG_CONTROL_OPEN_ALL_FUNCTION = 1,												/**<  ¿ªÆôËùÓÐ¹¦ÄÜ */
-	SYSTEMLOG_CONTROL_CLOSE_ALL_FUNCTION,												/**<  ¹Ø±ÕËùÓÐ¹¦ÄÜ */
+	SYSTEMLOG_CONTROL_OPEN_ALL_FUNCTION = 1,												/**<  å¼€å¯æ‰€æœ‰åŠŸèƒ½ */
+	SYSTEMLOG_CONTROL_CLOSE_ALL_FUNCTION,												/**<  å…³é—­æ‰€æœ‰åŠŸèƒ½ */
 };
 
-/*<ÎÄ¼þÉ¨ÃèÃüÁîÏûÏ¢>µÄÊÂ¼þÀàÐÍ £¨CLIENT_MSG_CODE_DEVICE_CONTROL_MESSAGECODE£©*/
+/*<æ–‡ä»¶æ‰«æå‘½ä»¤æ¶ˆæ¯>çš„äº‹ä»¶ç±»åž‹ ï¼ˆCLIENT_MSG_CODE_DEVICE_CONTROL_MESSAGECODEï¼‰*/
 enum CLIENT_MSG_CODE_FILESCAN_CONTROL_MESSAGECODE
 {
-	FILESCAN_CONTROL_OPEN_ALL_FUNCTION = 1,												/**<  ¿ªÆôËùÓÐ¹¦ÄÜ */
-	FILESCAN_CONTROL_CLOSE_ALL_FUNCTION,												/**<  ¹Ø±ÕËùÓÐ¹¦ÄÜ */
+	FILESCAN_CONTROL_OPEN_ALL_FUNCTION = 1,												/**<  å¼€å¯æ‰€æœ‰åŠŸèƒ½ */
+	FILESCAN_CONTROL_CLOSE_ALL_FUNCTION,												/**<  å…³é—­æ‰€æœ‰åŠŸèƒ½ */
 };
 
-/*<·À»ðÇ½¿ØÖÆÃüÁîÏûÏ¢>µÄÊÂ¼þÀàÐÍ £¨CLIENT_MSG_CODE_DEVICE_CONTROL_MESSAGECODE£©*/
+/*<é˜²ç«å¢™æŽ§åˆ¶å‘½ä»¤æ¶ˆæ¯>çš„äº‹ä»¶ç±»åž‹ ï¼ˆCLIENT_MSG_CODE_DEVICE_CONTROL_MESSAGECODEï¼‰*/
 enum CLIENT_MSG_CODE_FIREWALL_CONTROL_MESSAGECODE
 {
-	FIREWALL_CONTROL_OPEN_ALL_FUNCTION = 1,												/**<  ¿ªÆôËùÓÐ¹¦ÄÜ */
-	FIREWALL_CONTROL_CLOSE_ALL_FUNCTION,												/**<  ¹Ø±ÕËùÓÐ¹¦ÄÜ */
+	FIREWALL_CONTROL_OPEN_ALL_FUNCTION = 1,												/**<  å¼€å¯æ‰€æœ‰åŠŸèƒ½ */
+	FIREWALL_CONTROL_CLOSE_ALL_FUNCTION,												/**<  å…³é—­æ‰€æœ‰åŠŸèƒ½ */
 };
 
-/*<¼ôÇÐ°å¿ØÖÆÃüÁîÏûÏ¢>µÄÊÂ¼þÀàÐÍ £¨CLIENT_MSG_CODE_CLIPBOARD_CONTROL_MESSAGECODE£©*/
+/*<å‰ªåˆ‡æ¿æŽ§åˆ¶å‘½ä»¤æ¶ˆæ¯>çš„äº‹ä»¶ç±»åž‹ ï¼ˆCLIENT_MSG_CODE_CLIPBOARD_CONTROL_MESSAGECODEï¼‰*/
 enum CLIENT_MSG_CODE_CLIPBOARD_CONTROL_MESSAGECODE
 {
-	CLIPBOARD_CONTROL_OPEN_ALL_FUNCTION = 1,											/**<  ¿ªÆôËùÓÐ¹¦ÄÜ */
-	CLIPBOARD_CONTROL_CLOSE_ALL_FUNCTION,												/**<  ¹Ø±ÕËùÓÐ¹¦ÄÜ */
+	CLIPBOARD_CONTROL_OPEN_ALL_FUNCTION = 1,											/**<  å¼€å¯æ‰€æœ‰åŠŸèƒ½ */
+	CLIPBOARD_CONTROL_CLOSE_ALL_FUNCTION,												/**<  å…³é—­æ‰€æœ‰åŠŸèƒ½ */
 };
 
 class CWLMessageSender
@@ -51,12 +51,12 @@ public:
 	~CWLMessageSender(void);
 
 	/*!
-	*  ÏòÖ÷·þÎñ³ÌÐò·¢ËÍÏûÏ¢
-	* \param[in] dwMsgCode	  ÏûÏ¢Âë
-	* \param[in] dwEventType  ÊÂ¼þÀàÐÍ
-	* \param[in] dwDataSize   ÊÂ¼þÊý¾Ý³¤¶È(×Ö½ÚÊý, in bytes)
-	* \param[in] lpEventData  ÊÂ¼þÊý¾Ý
-	* \return  ·µ»ØERROR_SUCCESS(¼´0)±íÊ¾³É¹¦£¬·µ»ØÆäËûÖµ±íÊ¾Ê§°Ü(·µ»ØÖµÎª´íÎóÂë)¡£
+	*  å‘ä¸»æœåŠ¡ç¨‹åºå‘é€æ¶ˆæ¯
+	* \param[in] dwMsgCode	  æ¶ˆæ¯ç 
+	* \param[in] dwEventType  äº‹ä»¶ç±»åž‹
+	* \param[in] dwDataSize   äº‹ä»¶æ•°æ®é•¿åº¦(å­—èŠ‚æ•°, in bytes)
+	* \param[in] lpEventData  äº‹ä»¶æ•°æ®
+	* \return  è¿”å›žERROR_SUCCESS(å³0)è¡¨ç¤ºæˆåŠŸï¼Œè¿”å›žå…¶ä»–å€¼è¡¨ç¤ºå¤±è´¥(è¿”å›žå€¼ä¸ºé”™è¯¯ç )ã€‚
 	*/
 	DWORD SendMsgToMmf(DWORD dwEventType, DWORD dwMsgCode, DWORD dwDataSize, BYTE* lpEventData);
 private:

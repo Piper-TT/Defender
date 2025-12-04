@@ -145,7 +145,7 @@ BOOL CNtDriverService::Start()
 			break;
 		}
 
-		// ³¬Ê±¼ì²â
+		// è¶…æ—¶æ£€æµ‹
 		if (::GetTickCount() - dwStopStart > 8000)
 		{
 			WriteError(_T("Wait for Service %s Time Out!"), m_strServiceName);
@@ -211,7 +211,7 @@ BOOL CNtDriverService::Start()
 		
 		if (dwWaitCount++ > 3)
 		{
-			// µÈ´ıÈı´ÎÑ­»·ÒÔºó£¬Èç¹û·şÎñÈÔÈ»Ã»ÍË³ö£¬Ôò·µ»ØÊ§°Ü
+			// ç­‰å¾…ä¸‰æ¬¡å¾ªç¯ä»¥åï¼Œå¦‚æœæœåŠ¡ä»ç„¶æ²¡é€€å‡ºï¼Œåˆ™è¿”å›å¤±è´¥
 			WriteError(_T("Service %s Start Error!"), m_strServiceName);
 			break;
 		}
@@ -264,7 +264,7 @@ BOOL CNtDriverService::Stop()
 	}
 
 	DWORD	dwStartTime = GetTickCount();
-	DWORD	dwTimeOut = 10000;	// 10Ãë³¬Ê±
+	DWORD	dwTimeOut = 10000;	// 10ç§’è¶…æ—¶
 	DWORD	dwWaitCount = 0;
 
 	// Make sure the service is not already stopped
@@ -302,7 +302,7 @@ BOOL CNtDriverService::Stop()
 	//	}
 	//	if (dwWaitCount++ > 5)
 	//	{
-	//		// µÈ´ıÈı´ÎÑ­»·ÒÔºó£¬Èç¹û·şÎñÈÔÈ»Ã»ÍË³ö£¬Ôò·µ»ØÊ§°Ü
+	//		// ç­‰å¾…ä¸‰æ¬¡å¾ªç¯ä»¥åï¼Œå¦‚æœæœåŠ¡ä»ç„¶æ²¡é€€å‡ºï¼Œåˆ™è¿”å›å¤±è´¥
 	//		bResult = FALSE;
 	//		WriteError(_T("Wait for Service %s Stopped Time out!, errno:%d"), m_strServiceName, GetLastError());
 	//		goto DONE;

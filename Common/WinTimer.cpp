@@ -12,12 +12,12 @@ WinTimerHelper::~WinTimerHelper()
 	{
 		if (!DeleteTimerQueueTimer(m_hTimerQueue, hTimer, NULL))
 		{
-			//É¾³ýÊ§°Ü
+			//åˆ é™¤å¤±è´¥
 			WriteError(("DeleteTimerQueueTimer fail, errno={}"), GetLastError());
 		}
 	}
 	
-	// É¾³ý¼ÆÊ±Æ÷¶ÓÁÐ
+	// åˆ é™¤è®¡æ—¶å™¨é˜Ÿåˆ—
 	if (!DeleteTimerQueue(m_hTimerQueue))
 	{
 		WriteError(("DeleteTimerQueue fail, errno={}"), GetLastError());

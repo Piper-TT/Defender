@@ -1,19 +1,19 @@
 
 /*++
-��˾����Ŭ�ع�˾
+公司：威努特公司
 
-ժҪ:
+摘要:
 
-	 ���ܡ�����
+	 加密、解密
 
-������:
+责任人:
 	Qi YF
 
-ģ�鴴������:
+模块创建日期:
 	2022-1-4
 
 
-����˵��:
+更新说明:
     2023.10.10 Convert c to cpp
 --*/
 #include "sm4.h"
@@ -78,18 +78,18 @@ void CSM4Crypto::SM4DecryptBuffer(void *In, void *Out, int Len)
 }
 
 /********************************************************
-������EncryptSector
+函数：EncryptSector
 
-���ã�
-	1��ʵ�ּ��ܣ�Ŀǰ�����ù���4 �����㷨��
+作用：
+	1、实现加密，目前仅采用国密4 加密算法。
 
-ע�⣺1�����㵥Ԫ���֣���0���롣
-	  2�����ü��ܺ���Ӱ��Ƚϴ󣬱����ϸ�Ҫ�����롣
+注意：1、不足单元部分，用0补齐。
+	  2、调用加密函数影响比较大，必须严格按要求输入。
 
-������
-	 1��In ��Ҫ���ܵĴ�����
-	 2��Out �����Ժ�Ĵ�����
-	 3��UnitCount �������ĵ�Ԫ����һ����Ԫ��С��CRYPTO_UNIT_SIZE��
+参数：
+	 1、In 需要加密的传冲区
+	 2、Out 加密以后的传冲区
+	 3、UnitCount 传冲区的单元数（一个单元大小：CRYPTO_UNIT_SIZE）
 
 
 ********************************************************/
@@ -100,7 +100,7 @@ void CSM4Crypto::EncryptSector(void *In, void *Out, int UnitCount)
 }
 
 /********************************************************
-������DecryptSector
+函数：DecryptSector
 
 ********************************************************/
 void CSM4Crypto::DecryptSector(void *In, void *Out, int UnitCount)

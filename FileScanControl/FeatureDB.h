@@ -3,15 +3,15 @@
 #include "WindowsHelper.h"
 #include <string>
 #include <list>
+#include <mutex>
 #include <FileVaildate.h>
 #include "StringHelper.h"
 
+#define RANSOM_DIR _T("HashStore")
 
-#define RANSOM_DIR  _T("HashStore")
+typedef BOOL(APIENTRY* PFUNCTION_CHECK_RANSOMWARE)(PCHAR pszVirusName, PWCHAR pszFileName, int nType);
 
-typedef BOOL (APIENTRY *PFUNCTION_CHECK_RANSOMWARE) (PCHAR pszVirusName, PWCHAR pszFileName, int nType);
-
-#pragma pack (1)
+#pragma pack(1)
 #define HASH_TYPE_SHA1 (1)
 #define HASH_TYPE_SHA2 (2)
 #define HASH_TYPE_MD5  (3)
@@ -20,20 +20,19 @@ typedef BOOL (APIENTRY *PFUNCTION_CHECK_RANSOMWARE) (PCHAR pszVirusName, PWCHAR 
 #define HASHSTORE_HEADER_TGA1 'A'
 #define HASHSTORE_HEADER_TGA2 'R'
 #define HASHSTORE_HEADER_TGA3 'S'
-#define SM3_HASH_SIZE 32
-#define SHA256_HASH_SIZE 32
-#define MAX_VIRUS_NAME_LEN              (40)
-#define CRYPTO_UNIT_SIZE 16
-#define MD5_HASH_SIZE 16
-#define SHA1_HASH_SIZE 20
-//°´16×Ö½Ú¶ÔÆë
-typedef struct _HASHSTORE_HEADER
-{
-    UCHAR TGA_1;//0x65 A				//±êÊ¶ĞÅÏ¢
-    UCHAR TGA_2;//0x82 R
-    UCHAR TGA_3;//0x83 S
+#define SM3_HASH_SIZE         32
+#define SHA256_HASH_SIZE      32
+#define MAX_VIRUS_NAME_LEN    (40)
+#define CRYPTO_UNIT_SIZE      16
+#define MD5_HASH_SIZE         16
+#define SHA1_HASH_SIZE        20
+// æŒ‰16å­—èŠ‚å¯¹é½
+typedef struct _HASHSTORE_HEADER {
+    UCHAR TGA_1;           // 0x65 A				//æ ‡è¯†ä¿¡æ¯
+    UCHAR TGA_2;           // 0x82 R
+    UCHAR TGA_3;           // 0x83 S
 
-    SHORT StoreVersion_1;		//°æ±¾ĞÅÏ¢
+    SHORT StoreVersion_1;  // ç‰ˆæœ¬ä¿¡æ¯
     SHORT StoreVersion_2;
     SHORT StoreVersion_3;
     SHORT StoreVersion_4;
@@ -42,71 +41,68 @@ typedef struct _HASHSTORE_HEADER
 
     UCHAR Reserve[45];
 
-    UCHAR Sha1[SM3_HASH_SIZE];	//HashĞ£Ñé
-}
-HASHSTORE_HEADER, *PHASHSTORE_HEADER;
+    UCHAR Sha1[SM3_HASH_SIZE];  // Hashæ ¡éªŒ
+} HASHSTORE_HEADER, *PHASHSTORE_HEADER;
 
-//°´16×Ö½Ú¶ÔÆë
-typedef struct _VIRUS_INFO
-{
-    UCHAR HashType;				//HashÀàĞÍ£¬md5/sha1/sha256
-    UCHAR Hash[SHA256_HASH_SIZE];	//Hash
+// æŒ‰16å­—èŠ‚å¯¹é½
+typedef struct _VIRUS_INFO {
+    UCHAR HashType;                // Hashç±»å‹ï¼Œmd5/sha1/sha256
+    UCHAR Hash[SHA256_HASH_SIZE];  // Hash
 
     CHAR VirusName[MAX_VIRUS_NAME_LEN];
 
     UCHAR Reserve[7];
-}
-VIRUS_INFO, *PVIRUS_INFO;
+} VIRUS_INFO, *PVIRUS_INFO;
 
-#pragma pack ()
+#pragma pack()
 
-class CFeatureDB 
-{
+class CFeatureDB {
 public:
     static CFeatureDB* GetInstance();
 
     static void Destroy();
 
-    // ³õÊ¼»¯Feature DB
+    // åˆå§‹åŒ–Feature DB
     BOOL Init();
 
-    // Ö¸¶¨Ä¿Â¼»ò¾ßÌådatÎÄ¼ş½øĞĞ¶ÁÈ¡
-    BOOL Load(const std::wstring& strHashstoreDir = std::wstring(), const std::wstring &strSuffix = _T(".dat"));
+    // æŒ‡å®šç›®å½•æˆ–å…·ä½“datæ–‡ä»¶è¿›è¡Œè¯»å–
+    BOOL Load(const std::wstring& strHashstoreDir = std::wstring(), const std::wstring& strSuffix = _T(".dat"));
 
-    // ¶ÔÖ¸¶¨ÎÄ¼ş½øĞĞ²é¶¾£¨ÅĞ¶ÏÊÇ·ñÔÚÌØÕ÷¿âÖĞ£©
+    // å¯¹æŒ‡å®šæ–‡ä»¶è¿›è¡ŒæŸ¥æ¯’ï¼ˆåˆ¤æ–­æ˜¯å¦åœ¨ç‰¹å¾åº“ä¸­ï¼‰
     BOOL CheckRansomware(string strVirusName, wstring wstrFileName, int nType = 3 /*HASH_TYPE_MD5*/);
 
     void CalcFileHash(PUCHAR pHash, int nLength, int nType, PBYTE pBuf, const DWORD& size);
 
-    // ²éÑ¯Ö¸¶¨HASHÊÇ·ñ´æÔÚ
-    BOOL IsHashExist(UCHAR *pHash, int nLength, BOOL &bExist, string pszVirusName);
+    // æŸ¥è¯¢æŒ‡å®šHASHæ˜¯å¦å­˜åœ¨
+    BOOL IsHashExist(UCHAR* pHash, int nLength, BOOL& bExist, string pszVirusName);
 
     BOOL FetchFileHash(PUCHAR pHash, const int& nLength, const int& nType, const std::wstring& strFile);
+
 protected:
     CFeatureDB();
     ~CFeatureDB();
 
-    // Ğ¶ÔØ
+    // å¸è½½
     void Uninit();
 
-    // ³õÊ¼»¯»·¾³
+    // åˆå§‹åŒ–ç¯å¢ƒ
     BOOL InitEnv();
 
-    // ³õÊ¼»¯DBÂ·¾¶
+    // åˆå§‹åŒ–DBè·¯å¾„
     void InitDBPath();
 
-    // ¼ÓÔØdatÎÄ¼ş
+    // åŠ è½½datæ–‡ä»¶
     BOOL LoadDat(const std::wstring& strDatPath, std::wstring& strDatVersion);
 
     bool ClearLMDB();
 
 private:
-    static CFeatureDB* m_pInst; // µ¥ÊµÀı¶ÔÏó
+    static CFeatureDB* m_pInst;  // å•å®ä¾‹å¯¹è±¡
 
-    MDB_env *m_pEnv;
-    BOOL m_bInit; // ³õÊ¼»¯×´Ì¬
+    MDB_env*    m_pEnv;
+    BOOL        m_bInit;         // åˆå§‹åŒ–çŠ¶æ€
     std::string m_strDBPath;
 
-	std::mutex m_Mutex;
-	//CMutexUtil m_Mutex;
+    std::mutex m_Mutex;
+    // CMutexUtil m_Mutex;
 };

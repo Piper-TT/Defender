@@ -48,38 +48,38 @@ public:
 
 	BOOL GetPEFileDegistByLib(const TCHAR* szFileFullPath, unsigned char bHashCode[INTEGRITY_LENGTH]);
 
-	// ²åÈëÎÄ¼şÁĞ±íµ½ÏµÍ³°×Ãûµ¥¿â»òÄ³¸ö°×Ãûµ¥ÎÄ¼şÖĞ
+	// æ’å…¥æ–‡ä»¶åˆ—è¡¨åˆ°ç³»ç»Ÿç™½åå•åº“æˆ–æŸä¸ªç™½åå•æ–‡ä»¶ä¸­
 	BOOL InsertFileInfoListToWhiteListLib(unsigned int magic, const TCHAR* szWhiteListLibFile, VECTOR_FILEINFOSTRUCT& vector_fileinfostruct, OUT DWORD& dwFileCount, BOOL bClearHistory, BOOL bDeduplication = FALSE, BOOL bWithHash = FALSE);
 	BOOL InsertFileInfoListToSystemWhiteListLib(VECTOR_FILEINFOSTRUCT& vector_fileinfostruct, OUT DWORD& dwFileCount, BOOL bDeduplication = FALSE, BOOL bWithHash = FALSE);
 
 	// BOOL InsertFileInfoListToSystemWhiteListLib_LessMemoary(VECTOR_FILEINFOSTRUCT &vector_fileinfostruct, OUT DWORD &dwFileCount, BOOL bDeduplication = FALSE, BOOL bWithHash = FALSE);
 	// BOOL InsertFileInfoListToWhiteListLib_LessMemoary(unsigned int magic, const TCHAR* szWhiteListLibFile, VECTOR_FILEINFOSTRUCT &vector_fileinfostruct, OUT DWORD &dwFileCount, BOOL bClearHistory, BOOL bDeduplication = FALSE, BOOL bWithHash= FALSE);
 
-	 // »ñÈ¡ÏµÍ³°×Ãûµ¥ÁĞ±í
+	 // è·å–ç³»ç»Ÿç™½åå•åˆ—è¡¨
 	BOOL GetFileInfoListFromSystemWhiteListLib(VECTOR_INTEGRITY_ITEM& VecPEDigest);
 	BOOL RemoveFileInfoListFromSystemWhiteListLib(VECTOR_FILEINFOSTRUCT& vector_fileinfostruct, OUT DWORD& dwFileCount);
 
-	// ºÏ²¢°×Ãûµ¥ÁĞ±íµ½ÏµÍ³°×Ãûµ¥¿â»òÄ³¸ö°×Ãûµ¥ÎÄ¼şÖĞ
+	// åˆå¹¶ç™½åå•åˆ—è¡¨åˆ°ç³»ç»Ÿç™½åå•åº“æˆ–æŸä¸ªç™½åå•æ–‡ä»¶ä¸­
 	BOOL MergeWhiteListFileToWhiteListLib(const TCHAR* szDstWhiteListLibFile, const TCHAR* szSrcWhiteListLibFile, BOOL bDeduplication = FALSE);
 	BOOL MergeWhiteListFileToSystemWhiteListLib(const TCHAR* szSrcWhiteListLibFile);
 
-	// ²åÈëĞÅÈÎÂ·¾¶/½ø³Ìµ½ÏµÍ³ĞÅÈÎÂ·¾¶¿âÖĞ
+	// æ’å…¥ä¿¡ä»»è·¯å¾„/è¿›ç¨‹åˆ°ç³»ç»Ÿä¿¡ä»»è·¯å¾„åº“ä¸­
 	BOOL InsertFileInfoListToSystemWhiteListAuxLib(unsigned int magic, VECTOR_FILEINFOSTRUCT& vector_fileinfostruct, OUT DWORD& dwFileCount, BOOL bDeduplication = FALSE);
-	// »ñÈ¡ÏµÍ³ĞÅÈÎÂ·¾¶/½ø³ÌÁĞ±í
+	// è·å–ç³»ç»Ÿä¿¡ä»»è·¯å¾„/è¿›ç¨‹åˆ—è¡¨
 	BOOL GetFileInfoListFromSystemWhiteListAuxLib(VECTOR_INTEGRITY_ITEM& VecPEDigest);
 	BOOL RemoveFileInfoListFromSystemWhiteListAuxLib(unsigned int magic, VECTOR_FILEINFOSTRUCT& vector_fileinfostruct, OUT DWORD& dwFileCount);
 
-	// ²åÈëÁĞ±í
+	// æ’å…¥åˆ—è¡¨
 	BOOL InsertFileInfoListToPlyFile(LPCTSTR lpFileName, unsigned int magic, VECTOR_FILEINFOSTRUCT& vector_fileinfostruct, OUT DWORD& dwFileCount, BOOL bClearHistory, BOOL bDeduplication = FALSE);
-	// »ñÈ¡ÁĞ±í
+	// è·å–åˆ—è¡¨
 	BOOL GetFileInfoListFromPlyFile(LPCTSTR lpFileName, VECTOR_INTEGRITY_ITEM& VecPEDigest);
-	// É¾³ıÁĞ±í
+	// åˆ é™¤åˆ—è¡¨
 	BOOL RemoveFileInfoListFromPlyFile(LPCTSTR lpFileName, unsigned int magic, VECTOR_FILEINFOSTRUCT& vector_fileinfostruct, OUT DWORD& dwFileCount);
 
-	// Ìí¼ÓÒ»Ìõ×¢²á±íÏî
+	// æ·»åŠ ä¸€æ¡æ³¨å†Œè¡¨é¡¹
 	BOOL AddRegItem(LPCTSTR lpRegName);
 
-	// Ìí¼Ó×¢²á±íÏî
+	// æ·»åŠ æ³¨å†Œè¡¨é¡¹
 	BOOL AddRegItem(LPCTSTR lpFileName, VECTOR_FILEINFOSTRUCT& vector_fileinfostruct, OUT DWORD& dwFileCount, BOOL bClearHistory, BOOL bDeduplication = FALSE);
 
 	BOOL JudgeRegKeyOrValue(std::wstring wstrRegItemPath, unsigned int& Magic);

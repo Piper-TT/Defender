@@ -5,7 +5,7 @@
 #define STATUS_ENABLE				1
 #define STATUS_NOCONFIG				2
 
-//³éÏó¹¤³§
+//æŠ½è±¡å·¥å‚
 class CFirewallBase : public CWLBaseThread
 {
 public:	

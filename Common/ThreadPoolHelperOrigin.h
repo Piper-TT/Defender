@@ -32,7 +32,7 @@ public:
 		}
 	}
 
-	//Èë¶ÓÁÐ
+	//å…¥é˜Ÿåˆ—
 	template <class F, class... Args>
 	void enqueue(F&& f, Args&&... args)
 	{
@@ -49,7 +49,7 @@ public:
 			std::unique_lock<std::mutex> lock(queueMutex);
 			m_stop = true;
 		}
-		//Í¨ÖªËùÓÐµÄcondition¼ÌÐøÖ´ÐÐ
+		//é€šçŸ¥æ‰€æœ‰çš„conditionç»§ç»­æ‰§è¡Œ
 		condition.notify_all();
 		for (std::thread& worker : workers)
 		{

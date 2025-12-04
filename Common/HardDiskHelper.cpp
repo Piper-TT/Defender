@@ -147,21 +147,21 @@ int CGetHardDiskSerialNumber::GetHardDriveSerialNumber(string& HardDriveSerialNu
 	GetWindowsVersion.SeGetWindowsVersion(nWindowsVersion, bWin64);
 
 	/*
-	ÔÚxpºÍ2003µÄÕæ»ú»·¾³ÏÂ¸Ãº¯ÊıÎŞ·¨Ö´ĞĞ³É¹¦
-	vistaÕæ»ú»·¾³Ã»ÓĞ°²×°³É¹¦£¬ÔİÊ±Ìø¹ı
+	åœ¨xpå’Œ2003çš„çœŸæœºç¯å¢ƒä¸‹è¯¥å‡½æ•°æ— æ³•æ‰§è¡ŒæˆåŠŸ
+	vistaçœŸæœºç¯å¢ƒæ²¡æœ‰å®‰è£…æˆåŠŸï¼Œæš‚æ—¶è·³è¿‡
 	*/
 	if (nWindowsVersion <= WIN_2003_SERVER_R2_X64 || (nWindowsVersion == WIN_VISTA_X32 || nWindowsVersion == WIN_VISTA_X64))
 	{
 		goto END;
 	}
 
-	//»ñÈ¡ÏµÍ³Ä¿Â¼
+	//è·å–ç³»ç»Ÿç›®å½•
 	if (!GetWindowsDirectory(path, MAX_PATH))
 	{
 		goto END;
 	}
 
-	//Éè±¸ÃüÃû¿Õ¼äÃû³Æ"\\\\.\\C:",ÕâÖÖ·½Ê½¿ÉÒÔÖ±½Ó·ÃÎÊ´ÅÅÌ¾í
+	//è®¾å¤‡å‘½åç©ºé—´åç§°"\\\\.\\C:",è¿™ç§æ–¹å¼å¯ä»¥ç›´æ¥è®¿é—®ç£ç›˜å·
 	_sntprintf_s(rawDiskName, MAX_PATH, _T("\\\\.\\%c:"), path[0]);
 
 	hVolume = CreateFile(rawDiskName, GENERIC_READ,
@@ -197,7 +197,7 @@ int CGetHardDiskSerialNumber::GetHardDriveSerialNumber(string& HardDriveSerialNu
 		char buffer[10000] = { 0 };
 		char driveName[MAX_PATH] = { 0 };
 
-		//\\\\.\\PhysicalDrive1ÊÇÖ±½Ó·ÃÎÊÎïÀí´ÅÅÌµÄÉè±¸Â·¾¶£¬Í¨¹ıÕâÖÖÉè±¸Â·¾¶£¬¿ÉÒÔÖ±½Ó¶ÔÎïÀí´ÅÅÌ½øĞĞ¶ÁĞ´²Ù×÷£¬¶ø²»ÊÇ·ÃÎÊ´ÅÅÌÉÏµÄ¾í¡£
+		//\\\\.\\PhysicalDrive1æ˜¯ç›´æ¥è®¿é—®ç‰©ç†ç£ç›˜çš„è®¾å¤‡è·¯å¾„ï¼Œé€šè¿‡è¿™ç§è®¾å¤‡è·¯å¾„ï¼Œå¯ä»¥ç›´æ¥å¯¹ç‰©ç†ç£ç›˜è¿›è¡Œè¯»å†™æ“ä½œï¼Œè€Œä¸æ˜¯è®¿é—®ç£ç›˜ä¸Šçš„å·ã€‚
 		sprintf_s(driveName, "\\\\.\\PhysicalDrive%d", drive);
 
 		//  Windows NT, Windows 2000, Windows XP - admin rights not required
@@ -231,9 +231,9 @@ int CGetHardDiskSerialNumber::GetHardDriveSerialNumber(string& HardDriveSerialNu
 
 			wstring strEunmeratorName;
 
-			if (nWindowsVersion < WIN_8_0_X32)//win8 ºóµÄÏµÍ³¶ÔÊ¹ÓÃataÇı¶¯µÄÓ²ÅÌ×Ô¶¯·­×ª
+			if (nWindowsVersion < WIN_8_0_X32)//win8 åçš„ç³»ç»Ÿå¯¹ä½¿ç”¨ataé©±åŠ¨çš„ç¡¬ç›˜è‡ªåŠ¨ç¿»è½¬
 			{
-				//²éÕÒÓ²ÅÌÃ¶¾ÙÖµ
+				//æŸ¥æ‰¾ç¡¬ç›˜æšä¸¾å€¼
 				if (!FindDiInfos(deviceInfo.DeviceType, deviceInfo.DeviceNumber, strEunmeratorName))
 				{
 					goto END;
@@ -289,9 +289,9 @@ BOOL CGetHardDiskSerialNumber::FindDiInfos(__in DEVICE_TYPE DeviceType, __in DWO
 	int nIndex = 0;
 	PSP_DEVICE_INTERFACE_DETAIL_DATA pInterfaceDetailData = NULL;
 	HANDLE hDev = NULL;
-	int nMax = 100;//Ö»ÓÃÀ´ÖÕÖ¹Ñ­»·£¬·ÀÖ¹ËÀÑ­»·
+	int nMax = 100;//åªç”¨æ¥ç»ˆæ­¢å¾ªç¯ï¼Œé˜²æ­¢æ­»å¾ªç¯
 
-	//»ñÈ¡ËùÓĞ´ÅÅÌÀàĞÍµÄÉè±¸
+	//è·å–æ‰€æœ‰ç£ç›˜ç±»å‹çš„è®¾å¤‡
 	hDeviceInfoSet = SetupDiGetClassDevs(&GUID_DEVINTERFACE_DISK, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 	if (INVALID_HANDLE_VALUE == hDeviceInfoSet)
 	{
@@ -299,7 +299,7 @@ BOOL CGetHardDiskSerialNumber::FindDiInfos(__in DEVICE_TYPE DeviceType, __in DWO
 		goto END;
 	}
 
-	//Ã¶¾ÙÉè±¸
+	//æšä¸¾è®¾å¤‡
 	for (nIndex = 0; nIndex < nMax; nIndex++)
 	{
 		SP_DEVICE_INTERFACE_DATA interfaceData;
@@ -310,7 +310,7 @@ BOOL CGetHardDiskSerialNumber::FindDiInfos(__in DEVICE_TYPE DeviceType, __in DWO
 		DWORD cbBytesReturned = 0;
 		BOOL bSuccess = FALSE;
 
-		//»ñÈ¡Éè±¸µÄ½Ó¿ÚĞÅÏ¢
+		//è·å–è®¾å¤‡çš„æ¥å£ä¿¡æ¯
 		ZeroMemory(&interfaceData, sizeof(interfaceData));
 		interfaceData.cbSize = sizeof(interfaceData);
 		bSuccess = SetupDiEnumDeviceInterfaces(hDeviceInfoSet, NULL, &GUID_DEVINTERFACE_DISK, nIndex, &interfaceData);
@@ -327,7 +327,7 @@ BOOL CGetHardDiskSerialNumber::FindDiInfos(__in DEVICE_TYPE DeviceType, __in DWO
 			}
 		}
 
-		//»ñÈ¡ËùĞèµÄ»º³åÇø´óĞ¡
+		//è·å–æ‰€éœ€çš„ç¼“å†²åŒºå¤§å°
 		bSuccess = SetupDiGetDeviceInterfaceDetail(hDeviceInfoSet, &interfaceData, NULL, 0, &dwRequiredSize, NULL);
 		if ((!bSuccess && GetLastError() != ERROR_INSUFFICIENT_BUFFER) || dwRequiredSize == 0)
 		{
@@ -339,7 +339,7 @@ BOOL CGetHardDiskSerialNumber::FindDiInfos(__in DEVICE_TYPE DeviceType, __in DWO
 		{
 			goto END;
 		}
-		//»ñÈ¡½Ó¿ÚÏêÏ¸ĞÅÏ¢
+		//è·å–æ¥å£è¯¦ç»†ä¿¡æ¯
 		pInterfaceDetailData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
 		ZeroMemory(&deviceInfoData, sizeof(deviceInfoData));
 		deviceInfoData.cbSize = sizeof(deviceInfoData);
@@ -386,7 +386,7 @@ BOOL CGetHardDiskSerialNumber::FindDiInfos(__in DEVICE_TYPE DeviceType, __in DWO
 				goto END;
 			}
 
-			//Êä³öÃ¶¾ÙÖµ
+			//è¾“å‡ºæšä¸¾å€¼
 
 			strEunmeratorName = szBuffer;
 		}

@@ -89,7 +89,7 @@ BOOL CWLIPCMmf::WriteDataInternal(DWORD dwDataSize, const BYTE* pData)
 		return FALSE;
 	}
 
-	DWORD* pCurDataSize = (DWORD*)(BYTE*)m_pMapView;	//*pCurDataSize = µ±Ç°¹²ÏíÄÚ´æÖĞ»¹Î´±»¶ÁÈ¡µÄ×Ö½ÚÊı
+	DWORD* pCurDataSize = (DWORD*)(BYTE*)m_pMapView;	//*pCurDataSize = å½“å‰å…±äº«å†…å­˜ä¸­è¿˜æœªè¢«è¯»å–çš„å­—èŠ‚æ•°
 	BYTE* pCurData = (BYTE*)m_pMapView + sizeof(DWORD);
 
 	if (*pCurDataSize + dwDataSize > m_dwMmfSize)
@@ -98,7 +98,7 @@ BOOL CWLIPCMmf::WriteDataInternal(DWORD dwDataSize, const BYTE* pData)
 		return FALSE;
 	}
 
-	//Èç¹û*pCurDataSizeÎª0µÄ»°£¬Ëû¾Í»á¸²¸ÇÖ®Ç°Ğ´ÈëµÄÄÚ´æ¡£
+	//å¦‚æœ*pCurDataSizeä¸º0çš„è¯ï¼Œä»–å°±ä¼šè¦†ç›–ä¹‹å‰å†™å…¥çš„å†…å­˜ã€‚
 	memcpy(pCurData + *pCurDataSize, pData, dwDataSize);
 	*pCurDataSize += dwDataSize;
 

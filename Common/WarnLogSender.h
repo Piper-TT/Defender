@@ -10,11 +10,11 @@
 #define MAX_CONTENT_LEN									1024
 #define MAX_VERSION_LEN									16
 
-// ¿Í»§¶Ë¹ÜÀíÔ±²Ù×÷ÈÕÖ¾
+// å®¢æˆ·ç«¯ç®¡ç†å‘˜æ“ä½œæ—¥å¿—
 typedef struct __ADMIN_OPERATION_LOG_STRUCT
 {
-	LONGLONG llTime;						// Ê±¼ä
-	WCHAR szUserName[MAX_PATH];				// ÓÃ»§Ãû³Æ £¨ÏµÍ³¹ÜÀíÔ±£ºSuperAdmin ¹ÜÀíÔ±£ºAdmin)
-	WCHAR szLogContent[MAX_INFO_LEN];		// ²Ù×÷ÄÚÈÝ
-	DWORD dwIsSuccess;						// ²Ù×÷½á¹û (1£º³É¹¦  0£ºÊ§°Ü)
+	LONGLONG llTime;						// æ—¶é—´
+	WCHAR szUserName[MAX_PATH];				// ç”¨æˆ·åç§° ï¼ˆç³»ç»Ÿç®¡ç†å‘˜ï¼šSuperAdmin ç®¡ç†å‘˜ï¼šAdmin)
+	WCHAR szLogContent[MAX_INFO_LEN];		// æ“ä½œå†…å®¹
+	DWORD dwIsSuccess;						// æ“ä½œç»“æžœ (1ï¼šæˆåŠŸ  0ï¼šå¤±è´¥)
 }ADMIN_OPERATION_LOG_STRUCT, *PADMIN_OPERATION_LOG_STRUCT;

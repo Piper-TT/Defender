@@ -11,7 +11,7 @@ class CFireWallWin7 : public CFirewallBase
 {
 public:
 
-    //friend代表可以CFirewallBase可以访问CFireWallWin7的私有和保护的成员变量和函数
+    //friend浠ｈ〃鍙互CFirewallBase鍙互璁块棶CFireWallWin7鐨勭鏈夊拰淇濇姢鐨勬垚鍛樺彉閲忓拰鍑芥暟
     friend class CFirewallBase;
 
     CFireWallWin7();

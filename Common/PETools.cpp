@@ -58,7 +58,7 @@ MSI_PE_STRUCT CPETool::PaserPeFile(const std::wstring& wstrFilePath)
 
 
 	IS_EXIST(wstrFilePath.c_str());
-	// ´´½¨¶ÁÎÄ¼ş¾ä±ú
+	// åˆ›å»ºè¯»æ–‡ä»¶å¥æŸ„
 	hRead = CreateFile(wstrFilePath.c_str(),
 		GENERIC_READ,
 		FILE_SHARE_READ,
@@ -67,7 +67,7 @@ MSI_PE_STRUCT CPETool::PaserPeFile(const std::wstring& wstrFilePath)
 		FILE_ATTRIBUTE_NORMAL,
 		NULL);
 
-	// ÒÆ¶¯ÖÁÎÄ¼ş¿ªÍ·
+	// ç§»åŠ¨è‡³æ–‡ä»¶å¼€å¤´
 	dwRet = SetFilePointer(hRead, 0, NULL, FILE_BEGIN);
 	if (dwRet == INVALID_SET_FILE_POINTER)
 	{
@@ -76,7 +76,7 @@ MSI_PE_STRUCT CPETool::PaserPeFile(const std::wstring& wstrFilePath)
 
 	try
 	{
-		// ¶ÁÈ¡ÎÄ¼şÄÚÈİ
+		// è¯»å–æ–‡ä»¶å†…å®¹
 		DWORD dwFileSize = GetFileSize(hRead, NULL);
 		pBuffer = new BYTE[dwFileSize];
 		if (pBuffer == NULL)
@@ -90,7 +90,7 @@ MSI_PE_STRUCT CPETool::PaserPeFile(const std::wstring& wstrFilePath)
 			goto END;
 		}
 
-		// ½âÎöPEÎÄ¼ş
+		// è§£æPEæ–‡ä»¶
 		PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)pBuffer;
 		if (pDosHeader->e_magic != IMAGE_DOS_SIGNATURE)
 		{
@@ -108,13 +108,13 @@ MSI_PE_STRUCT CPETool::PaserPeFile(const std::wstring& wstrFilePath)
 
 		if (pNtHeader->FileHeader.Machine == IMAGE_FILE_MACHINE_I386)
 		{
-			//32Î»
+			//32ä½
 			peData.is_pe64 = false;
 			peData.nt_headers32 = *(PIMAGE_NT_HEADERS32)(pBuffer + pDosHeader->e_lfanew);
 		}
 		else if (pNtHeader->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
 		{
-			//64Î»
+			//64ä½
 			peData.is_pe64 = true;
 			peData.nt_headers64 = *(PIMAGE_NT_HEADERS64)(pBuffer + pDosHeader->e_lfanew);
 		}
@@ -129,7 +129,7 @@ MSI_PE_STRUCT CPETool::PaserPeFile(const std::wstring& wstrFilePath)
 			pSectionHeader++;
 		}
 
-		// ½âÎö·ûºÅ±í
+		// è§£æç¬¦å·è¡¨
 		PIMAGE_DEBUG_DIRECTORY pDebugDirectory;
 		PIMAGE_DATA_DIRECTORY pDebugDataDirectory;
 		PIMAGE_EXPORT_DIRECTORY pExportDirectory;
@@ -197,38 +197,38 @@ END:
 
 size_t CPETool::ConvertRvaToFoa(size_t RVA, LPVOID pFileBuffer)
 {
-	int i;//ÓÃÓÚ±éÀú½Ú±í
+	int i;//ç”¨äºéå†èŠ‚è¡¨
 	//	size_t FOA = 0;
 
-		//¶¨Òå±íÍ·Ö¸Õë
+		//å®šä¹‰è¡¨å¤´æŒ‡é’ˆ
 	PIMAGE_OPTIONAL_HEADER pOptionHeader = NULL;
 	PIMAGE_SECTION_HEADER pSectionHeader = NULL;
 
-	//¸ø±íÍ·¸³³õÖµ
+	//ç»™è¡¨å¤´èµ‹åˆå€¼
 
 	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)pFileBuffer;
 	PIMAGE_NT_HEADERS pNtHeader = (PIMAGE_NT_HEADERS)((PBYTE)pFileBuffer + pDosHeader->e_lfanew);
-	//µÚÒ»¸ö½Ú±íÍ·
+	//ç¬¬ä¸€ä¸ªèŠ‚è¡¨å¤´
 
 	pSectionHeader = IMAGE_FIRST_SECTION(pNtHeader);
-	if (RVA < pSectionHeader->VirtualAddress)//ÅĞ¶ÏRVAÊÇ·ñÔÚPEÍ·Çø
+	if (RVA < pSectionHeader->VirtualAddress)//åˆ¤æ–­RVAæ˜¯å¦åœ¨PEå¤´åŒº
 	{
 		if (RVA < pSectionHeader->PointerToRawData)
-			return RVA;//´ËÊ±FOA == RVA
+			return RVA;//æ­¤æ—¶FOA == RVA
 		else
 			return 0;
 	}
 
-	for (i = 0; i < pNtHeader->FileHeader.NumberOfSections; i++)//Ñ­»·±éÀú½Ú±íÍ·
+	for (i = 0; i < pNtHeader->FileHeader.NumberOfSections; i++)//å¾ªç¯éå†èŠ‚è¡¨å¤´
 	{
-		if (RVA >= pSectionHeader->VirtualAddress)//ÊÇ·ñ´óÓÚÕâ¸ö½Ú±íµÄRVA
+		if (RVA >= pSectionHeader->VirtualAddress)//æ˜¯å¦å¤§äºè¿™ä¸ªèŠ‚è¡¨çš„RVA
 		{
-			if (RVA <= pSectionHeader->VirtualAddress + pSectionHeader->SizeOfRawData)//ÅĞ¶ÏÊÇ·ñÔÚÕâ¸ö½ÚÇø
+			if (RVA <= pSectionHeader->VirtualAddress + pSectionHeader->SizeOfRawData)//åˆ¤æ–­æ˜¯å¦åœ¨è¿™ä¸ªèŠ‚åŒº
 			{
-				return (RVA - pSectionHeader->VirtualAddress) + pSectionHeader->PointerToRawData;//È·¶¨½ÚÇøºó£¬¼ÆËãFOA
+				return (RVA - pSectionHeader->VirtualAddress) + pSectionHeader->PointerToRawData;//ç¡®å®šèŠ‚åŒºåï¼Œè®¡ç®—FOA
 			}
 		}
-		else//RVA²»¿ÉÄÜ´ËÊ±µÄpSectionHeader->VirtuallAddressĞ¡£¬³ı·ÇÊÇ·µ»ØÖµÎª0µÄÇé¿ö¡£
+		else//RVAä¸å¯èƒ½æ­¤æ—¶çš„pSectionHeader->VirtuallAddresså°ï¼Œé™¤éæ˜¯è¿”å›å€¼ä¸º0çš„æƒ…å†µã€‚
 		{
 			return 0;
 		}

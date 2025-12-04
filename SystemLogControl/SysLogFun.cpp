@@ -40,7 +40,7 @@ BOOL CSysLogFun::GetSysLogByPsloglist(wstring wsStartDateTime, wstring wsEndDate
 
 	wchar_t FileName[MAX_PATH] = { 0 };
 	swprintf_s(FileName, _T("%s/%s.txt"), wsFilePath.c_str(), wsLogClass.c_str());
-	wsFilePath = FileName;	// ÎÄ¼şÂ·¾¶   ../wsLogClass.txt
+	wsFilePath = FileName;	// æ–‡ä»¶è·¯å¾„   ../wsLogClass.txt
 
 	wstring wsCmdLine = CWindowsHelper::GetSystemDir() + _T("\\psloglist.exe ");
 	if (wsStartDateTime.length() > 0)
@@ -67,7 +67,7 @@ BOOL CSysLogFun::GetSysLogByPsloglist(wstring wsStartDateTime, wstring wsEndDate
 	psa = &sa;
 	dwShareMode |= FILE_SHARE_DELETE;
 
-	//¸ù¾İ°æ±¾ÉèÖÃ¹²ÏíÄ£Ê½ºÍ°²È«ÊôĞÔ
+	//æ ¹æ®ç‰ˆæœ¬è®¾ç½®å…±äº«æ¨¡å¼å’Œå®‰å…¨å±æ€§
 	HANDLE hConsoleRedirect = CreateFile(
 		wsFilePath.c_str(),
 		GENERIC_ALL,
@@ -83,18 +83,18 @@ BOOL CSysLogFun::GetSysLogByPsloglist(wstring wsStartDateTime, wstring wsEndDate
 	}
 	STARTUPINFO s = { sizeof(s) };
 	s.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-	//Ê¹ÓÃ±ê×¼±úºÍÏÔÊ¾´°¿Ú
-	s.hStdOutput = hConsoleRedirect;//½«ÎÄ¼ş×÷Îª±ê×¼Êä³ö¾ä±ú,»¹¿ÉÒÔÊÇGetStdHandle(STD_OUTPUT_HANDLE)µ±Ç°¿ØÖÆÌ¨£¬ÄäÃû¹ÜµÀµÈ
-	s.wShowWindow = SW_HIDE;//Òş²Ø¿ØÖÆÌ¨´°¿Ú
+	//ä½¿ç”¨æ ‡å‡†æŸ„å’Œæ˜¾ç¤ºçª—å£
+	s.hStdOutput = hConsoleRedirect;//å°†æ–‡ä»¶ä½œä¸ºæ ‡å‡†è¾“å‡ºå¥æŸ„,è¿˜å¯ä»¥æ˜¯GetStdHandle(STD_OUTPUT_HANDLE)å½“å‰æ§åˆ¶å°ï¼ŒåŒ¿åç®¡é“ç­‰
+	s.wShowWindow = SW_HIDE;//éšè—æ§åˆ¶å°çª—å£
 	PROCESS_INFORMATION pi = { 0 };
 
 	static wstring wsWorkDir = CWindowsHelper::GetSystemDir();
 	if (CreateProcess(NULL, (LPTSTR)wsCmdLine.c_str(), NULL, NULL, TRUE, NULL, NULL, wsWorkDir.c_str(), &s, &pi))
 	{
-		//´´½¨½ø³Ì,Ö´ĞĞPing³ÌĞò,²âÊÔÍøÂçÊÇ·ñÁ¬Í¨
+		//åˆ›å»ºè¿›ç¨‹,æ‰§è¡ŒPingç¨‹åº,æµ‹è¯•ç½‘ç»œæ˜¯å¦è¿é€š
 		WaitForSingleObject(pi.hProcess, INFINITE);
 
-		//µÈ´ı½ø³ÌÖ´ĞĞÍê±Ï
+		//ç­‰å¾…è¿›ç¨‹æ‰§è¡Œå®Œæ¯•
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 		CloseHandle(hConsoleRedirect);
@@ -121,7 +121,7 @@ BOOL CSysLogFun::GetSysLogByEvtSubscribe()
 unsigned int WINAPI CSysLogFun::DoThreadSysLogExport(LPVOID lpParameter)
 {
 	CSysLogFun* pSysLogFun = (CSysLogFun*)lpParameter;
-	//²ÉÓÃ´Ë·½·¨ÊÇÎªÁË·ÀÖ¹XPÏµÍ³È±ÉÙÒ»Ğ©¾²Ì¬¿â£¬µ¼ÖÂÆô¶¯²»ÁË¸ÃÄ£¿é
+	//é‡‡ç”¨æ­¤æ–¹æ³•æ˜¯ä¸ºäº†é˜²æ­¢XPç³»ç»Ÿç¼ºå°‘ä¸€äº›é™æ€åº“ï¼Œå¯¼è‡´å¯åŠ¨ä¸äº†è¯¥æ¨¡å—
 	HMODULE hWevtapiModule = NULL;
 	hWevtapiModule = ::LoadLibrary(L"wevtapi.dll");
 	if (NULL == hWevtapiModule)
@@ -137,7 +137,7 @@ unsigned int WINAPI CSysLogFun::DoThreadSysLogExport(LPVOID lpParameter)
 		pSysLogFun->m_pEvtFormatMessage = (PEVTFORMATMESSAGE)GetProcAddress(hWevtapiModule, "EvtFormatMessage");
 	}
 
-	//winXPÒÔÉÏ
+	//winXPä»¥ä¸Š
 	if (NULL != pSysLogFun->m_pEvtSubScript && NULL != pSysLogFun->m_pEvtRender && NULL != pSysLogFun->m_pEvtOpenPublisherMetadata && NULL != pSysLogFun->m_pEvtFormatMessage)
 	{
 		pSysLogFun->ThreadSysLogExportInternal();
@@ -175,15 +175,15 @@ EVT_HANDLE CSysLogFun::RegisterEvtCallBack(IN PEVT_CALLBACK_CONTEXT pContext, IN
 	}
 
 	/*
-	NULL×÷ÎªµÚÒ»¸ö²ÎÊı£¬±íÊ¾Ã»ÓĞÖ¸¶¨ÊÂ¼ş¶©ÔÄ»á»°£¬ĞÂµÄ»á»°½«±»´´½¨¡£
-	NULL×÷ÎªµÚ¶ş¸ö²ÎÊı£¬±íÊ¾Ã»ÓĞÊ¹ÓÃĞÅºÅÊÂ¼şÀ´Í¨Öª¶©ÔÄÕß£¬Òò´ËÎŞ·¨ÊµÏÖÒì²½Í¨Öª¹¦ÄÜ¡£¶©ÔÄ½«ÊÇÍ¬²½µÄ£¬¼´ĞèÒªÖ÷¶¯Ê¹ÓÃEvtNextº¯ÊıÀ´¼ìË÷ÊÂ¼ş¡£
-	pContext->wsChannelPath.c_str()×÷ÎªµÚÈı¸ö²ÎÊı£¬Ö¸¶¨Òª¶©ÔÄµÄÊÂ¼şÈÕÖ¾Í¨µÀÂ·¾¶¡£pContext->wsChannelPathÊÇÒ»¸ö×Ö·û´®£¬±íÊ¾Òª¶©ÔÄµÄÊÂ¼şÍ¨µÀµÄÂ·¾¶¡£
-	NULL×÷ÎªµÚËÄ¸ö²ÎÊı£¬±íÊ¾Ã»ÓĞÖ¸¶¨²éÑ¯±í´ïÊ½£¬½«¶©ÔÄËùÓĞÊÂ¼ş¡£
-	NULL×÷ÎªµÚÎå¸ö²ÎÊı£¬±íÊ¾´Óµ±Ç°Ê±¼äµã¿ªÊ¼¶©ÔÄÊÂ¼ş£¬²»Ö¸¶¨ÆğÊ¼µÄÊéÇ©Î»ÖÃ¡£
-	(PVOID)pContext×÷ÎªµÚÁù¸ö²ÎÊı£¬´«µİÁËÒ»¸öÓÃ»§×Ô¶¨ÒåµÄÉÏÏÂÎÄÊı¾İÖ¸Õë£¬¸ÃÖ¸Õë½«ÔÚ»Øµ÷º¯ÊıÖĞÊ¹ÓÃ¡£
-	pFuncCallBack×÷ÎªµÚÆß¸ö²ÎÊı£¬Îª¶©ÔÄµÄ»Øµ÷º¯Êı£¬ÓÃÓÚ´¦Àí¶©ÔÄµ½µÄÊÂ¼ş¡£
-	EvtSubscribeToFutureEvents×÷ÎªµÚ°Ë¸ö²ÎÊı£¬Ö¸¶¨¶©ÔÄĞĞÎªÎª¶©ÔÄÎ´À´·¢ÉúµÄÊÂ¼ş¡£*/
-	hEvtHandle = m_pEvtSubScript(NULL, NULL, pContext->wsChannelPath.c_str(), NULL, NULL, (PVOID)pContext, pFuncCallBack, EvtSubscribeToFutureEvents);//½ö½ÓÊÕÖ®ºóµÄÊÂ¼ş
+	NULLä½œä¸ºç¬¬ä¸€ä¸ªå‚æ•°ï¼Œè¡¨ç¤ºæ²¡æœ‰æŒ‡å®šäº‹ä»¶è®¢é˜…ä¼šè¯ï¼Œæ–°çš„ä¼šè¯å°†è¢«åˆ›å»ºã€‚
+	NULLä½œä¸ºç¬¬äºŒä¸ªå‚æ•°ï¼Œè¡¨ç¤ºæ²¡æœ‰ä½¿ç”¨ä¿¡å·äº‹ä»¶æ¥é€šçŸ¥è®¢é˜…è€…ï¼Œå› æ­¤æ— æ³•å®ç°å¼‚æ­¥é€šçŸ¥åŠŸèƒ½ã€‚è®¢é˜…å°†æ˜¯åŒæ­¥çš„ï¼Œå³éœ€è¦ä¸»åŠ¨ä½¿ç”¨EvtNextå‡½æ•°æ¥æ£€ç´¢äº‹ä»¶ã€‚
+	pContext->wsChannelPath.c_str()ä½œä¸ºç¬¬ä¸‰ä¸ªå‚æ•°ï¼ŒæŒ‡å®šè¦è®¢é˜…çš„äº‹ä»¶æ—¥å¿—é€šé“è·¯å¾„ã€‚pContext->wsChannelPathæ˜¯ä¸€ä¸ªå­—ç¬¦ä¸²ï¼Œè¡¨ç¤ºè¦è®¢é˜…çš„äº‹ä»¶é€šé“çš„è·¯å¾„ã€‚
+	NULLä½œä¸ºç¬¬å››ä¸ªå‚æ•°ï¼Œè¡¨ç¤ºæ²¡æœ‰æŒ‡å®šæŸ¥è¯¢è¡¨è¾¾å¼ï¼Œå°†è®¢é˜…æ‰€æœ‰äº‹ä»¶ã€‚
+	NULLä½œä¸ºç¬¬äº”ä¸ªå‚æ•°ï¼Œè¡¨ç¤ºä»å½“å‰æ—¶é—´ç‚¹å¼€å§‹è®¢é˜…äº‹ä»¶ï¼Œä¸æŒ‡å®šèµ·å§‹çš„ä¹¦ç­¾ä½ç½®ã€‚
+	(PVOID)pContextä½œä¸ºç¬¬å…­ä¸ªå‚æ•°ï¼Œä¼ é€’äº†ä¸€ä¸ªç”¨æˆ·è‡ªå®šä¹‰çš„ä¸Šä¸‹æ–‡æ•°æ®æŒ‡é’ˆï¼Œè¯¥æŒ‡é’ˆå°†åœ¨å›è°ƒå‡½æ•°ä¸­ä½¿ç”¨ã€‚
+	pFuncCallBackä½œä¸ºç¬¬ä¸ƒä¸ªå‚æ•°ï¼Œä¸ºè®¢é˜…çš„å›è°ƒå‡½æ•°ï¼Œç”¨äºå¤„ç†è®¢é˜…åˆ°çš„äº‹ä»¶ã€‚
+	EvtSubscribeToFutureEventsä½œä¸ºç¬¬å…«ä¸ªå‚æ•°ï¼ŒæŒ‡å®šè®¢é˜…è¡Œä¸ºä¸ºè®¢é˜…æœªæ¥å‘ç”Ÿçš„äº‹ä»¶ã€‚*/
+	hEvtHandle = m_pEvtSubScript(NULL, NULL, pContext->wsChannelPath.c_str(), NULL, NULL, (PVOID)pContext, pFuncCallBack, EvtSubscribeToFutureEvents);//ä»…æ¥æ”¶ä¹‹åçš„äº‹ä»¶
 	if (NULL == hEvtHandle)
 	{
 		WriteError(("EvtSubscribe Failed, Error = {}"), GetLastError());
@@ -249,7 +249,7 @@ BOOL AnalyEvtXmlData(PWCHAR pEvtXmlData, PEVT_CALLBACK_CONTEXT pEvtCBKContext, H
 
 	GetEvtXmlDataNodes(pNodeList, vecNode);
 
-	//±éÀúvecNode£¬ÌáÈ¡³öÊÂ¼şÏî
+	//éå†vecNodeï¼Œæå–å‡ºäº‹ä»¶é¡¹
 	for (int n = 0; n < vecNode.size(); n++)
 	{
 		IXMLDOMNamedNodeMapPtr pAttrMap = NULL;
@@ -257,7 +257,7 @@ BOOL AnalyEvtXmlData(PWCHAR pEvtXmlData, PEVT_CALLBACK_CONTEXT pEvtCBKContext, H
 		pNodeName = NULL;
 		pNodeValue = NULL;
 
-		//»ñÈ¡ ½ÚµãÃû ºÍ text Öµ
+		//è·å– èŠ‚ç‚¹å å’Œ text å€¼
 		vecNode[n]->get_nodeName(&pNodeName);
 		vecNode[n]->get_text(&pNodeValue);
 		if (wcslen(pNodeName) > 0 && wcslen(pNodeValue) > 0
@@ -271,15 +271,15 @@ BOOL AnalyEvtXmlData(PWCHAR pEvtXmlData, PEVT_CALLBACK_CONTEXT pEvtCBKContext, H
 			{
 				pOneSyslog->dwEventID = _wtoi(pNodeValue);
 			}
-			else if (0 == wcscmp(pNodeName, _T("Level")))//µÈ¼¶
+			else if (0 == wcscmp(pNodeName, _T("Level")))//ç­‰çº§
 			{
 				pOneSyslog->dwEventType = (DWORD)_wtoi64(pNodeValue);
 			}
-			else if (0 == wcscmp(pNodeName, _T("EventRecordID")))//µÈ¼¶
+			else if (0 == wcscmp(pNodeName, _T("EventRecordID")))//ç­‰çº§
 			{
 				pOneSyslog->dwEventRecordID = (DWORD)_wtoi64(pNodeValue);
 			}
-			else if (0 == wcscmp(pNodeName, _T("Channel")))//ÈÕÖ¾ÀàĞÍ
+			else if (0 == wcscmp(pNodeName, _T("Channel")))//æ—¥å¿—ç±»å‹
 			{
 				if (0 == wcscmp(pNodeValue, _T("System")))
 				{
@@ -303,9 +303,9 @@ BOOL AnalyEvtXmlData(PWCHAR pEvtXmlData, PEVT_CALLBACK_CONTEXT pEvtCBKContext, H
 
 		/*
 		<Provider Name='Microsoft-Windows-Security-Auditing' Guid='{54849625-5478-4994-a5ba-3e3b0328c30d}'/>
-		NodeÎªProvider£¬NameºÍGuidÎªAttrMap£¬Microsoft-Windows-Security-AuditingÎªNameµÄÖµ
+		Nodeä¸ºProviderï¼ŒNameå’ŒGuidä¸ºAttrMapï¼ŒMicrosoft-Windows-Security-Auditingä¸ºNameçš„å€¼
 		<EventID>4673</EventID>
-		NodeÎªEventID£¬4673ÎªtextÖµ
+		Nodeä¸ºEventIDï¼Œ4673ä¸ºtextå€¼
 		*/
 		hResult = vecNode[n]->get_attributes(&pAttrMap);
 		if (!SUCCEEDED(hResult) || NULL == pAttrMap)
@@ -319,7 +319,7 @@ BOOL AnalyEvtXmlData(PWCHAR pEvtXmlData, PEVT_CALLBACK_CONTEXT pEvtCBKContext, H
 			goto Continue;
 		}
 
-		//±éÀúpAttrMap£¬·ÅÈëpAttrItem,Ä¿µÄÎªÁË»ñÈ¡ProviderºÍTimeCreatedµÄÖµ
+		//éå†pAttrMapï¼Œæ”¾å…¥pAttrItem,ç›®çš„ä¸ºäº†è·å–Providerå’ŒTimeCreatedçš„å€¼
 		for (int j = 0; j < lCount; j++)
 		{
 			IXMLDOMNodePtr pAttrItem = NULL;
@@ -332,7 +332,7 @@ BOOL AnalyEvtXmlData(PWCHAR pEvtXmlData, PEVT_CALLBACK_CONTEXT pEvtCBKContext, H
 			pItemName = NULL;
 			pItemValue = NULL;
 
-			// µÃµ½pAttrItemµÄ ½ÚµãÃû ºÍ text
+			// å¾—åˆ°pAttrItemçš„ èŠ‚ç‚¹å å’Œ text
 			pAttrItem->get_nodeName(&pItemName);
 			pAttrItem->get_text(&pItemValue);
 
@@ -371,7 +371,7 @@ BOOL AnalyEvtXmlData(PWCHAR pEvtXmlData, PEVT_CALLBACK_CONTEXT pEvtCBKContext, H
 }
 void CSysLogFun::GetEventDescription(HOST_AD_SYSLOG_STRUCT* pOneSysLog, EVT_HANDLE hEvtHandle)
 {
-	//ÄÃµ½·¢²¼ÕßÔªÊı¾İ¾ä±ú
+	//æ‹¿åˆ°å‘å¸ƒè€…å…ƒæ•°æ®å¥æŸ„
 	EVT_HANDLE hPublisherMetadata = NULL;
 	hPublisherMetadata = m_pEvtOpenPublisherMetadata(NULL, pOneSysLog->wsEventSourceName, NULL, 0, 0);
 	if (hPublisherMetadata == NULL)
@@ -382,7 +382,7 @@ void CSysLogFun::GetEventDescription(HOST_AD_SYSLOG_STRUCT* pOneSysLog, EVT_HAND
 	DWORD bufferSize = 0;
 	LPWSTR pFormattedMessage = NULL;
 
-	//·­ÒëÊÂ¼ş¼òÊö
+	//ç¿»è¯‘äº‹ä»¶ç®€è¿°
 	if (!m_pEvtFormatMessage(hPublisherMetadata, hEvtHandle, 0, 0, NULL, EvtFormatMessageEvent, bufferSize, NULL, &bufferSize))
 	{
 		if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
@@ -421,7 +421,7 @@ CLEAN:
 		m_pEvtClose(hPublisherMetadata);
 	}
 }
-// ¶©ÔÄÏµÍ³ÈÕÖ¾ÊÂ¼şµÄ»Øµ÷º¯Êı
+// è®¢é˜…ç³»ç»Ÿæ—¥å¿—äº‹ä»¶çš„å›è°ƒå‡½æ•°
 DWORD WINAPI EvtCallbackFunction(EVT_SUBSCRIBE_NOTIFY_ACTION EvtAction, PVOID pContext, EVT_HANDLE hEvtHandle)
 {
 	DWORD	dwBufferSize	= 0;
@@ -436,7 +436,7 @@ DWORD WINAPI EvtCallbackFunction(EVT_SUBSCRIBE_NOTIFY_ACTION EvtAction, PVOID pC
 	}
 
 	PEVT_CALLBACK_CONTEXT pEvtCBKContext = (PEVT_CALLBACK_CONTEXT)pContext;
-	//µÃµ½´Ë´ÎÊÂ¼şµÄXMLÊı¾İ
+	//å¾—åˆ°æ­¤æ¬¡äº‹ä»¶çš„XMLæ•°æ®
 	if (!pEvtCBKContext->pCSysLogFun->m_pEvtRender(NULL, hEvtHandle, EvtRenderEventXml, dwBufferSize, pEvtData, &dwBufferUsed, &dwPropertyCount))
 	{
 		if (ERROR_INSUFFICIENT_BUFFER != GetLastError() || 0 == dwBufferUsed)
@@ -453,20 +453,20 @@ DWORD WINAPI EvtCallbackFunction(EVT_SUBSCRIBE_NOTIFY_ACTION EvtAction, PVOID pC
 		}
 
 		/*
-		ÓÃÓÚ½«ÊÂ¼ş¾ä±úÖĞµÄÊÂ¼şĞÅÏ¢äÖÈ¾ÎªXML¸ñÊ½£¬²¢½«Æä´æ´¢ÔÚÖ¸¶¨µÄ»º³åÇøÖĞ¡£ÏÂÃæ¶Ôº¯Êıµ÷ÓÃ²ÎÊı½øĞĞÏêÏ¸½âÊÍ£º
-		µÚÒ»¸ö²ÎÊı NULL£º±íÊ¾Î´Ê¹ÓÃ£¬ËüÊÇÒ»¸ö±£Áô²ÎÊı£¬´Ë´¦ÉèÎªNULL¼´¿É¡£
-		µÚ¶ş¸ö²ÎÊı hEvtHandle£º±íÊ¾ÊÂ¼ş¾ä±ú£¬ÊÇÒ»¸öEVT_HANDLEÀàĞÍµÄ±äÁ¿£¬ÓÃÓÚÖ¸¶¨ÒªäÖÈ¾µÄÊÂ¼ş¡£
-		µÚÈı¸ö²ÎÊı EvtRenderEventXml£º±íÊ¾äÖÈ¾±êÖ¾£¬Ö¸Ê¾½«ÊÂ¼şäÖÈ¾ÎªXML¸ñÊ½¡£
-		µÚËÄ¸ö²ÎÊı dwBufferSize£º±íÊ¾»º³åÇø´óĞ¡£¬ÓÃÓÚÖ¸¶¨½ÓÊÕäÖÈ¾ºóµÄÊÂ¼şĞÅÏ¢ËùĞèµÄ»º³åÇø´óĞ¡¡£
-		µÚÎå¸ö²ÎÊı pEvtData£º±íÊ¾»º³åÇøÖ¸Õë£¬ÓÃÓÚ½ÓÊÕäÖÈ¾ºóµÄÊÂ¼şĞÅÏ¢¡£
-		µÚÁù¸ö²ÎÊı &dwBufferUsed£º±íÊ¾Êä³ö²ÎÊı£¬Ö¸ÏòÒ»¸öDWORDÀàĞÍµÄ±äÁ¿£¬ÓÃÓÚ·µ»ØÊµ¼ÊÊ¹ÓÃµÄ»º³åÇø´óĞ¡¡£
-		µÚÆß¸ö²ÎÊı &dwPropertyCount£º±íÊ¾Êä³ö²ÎÊı£¬Ö¸ÏòÒ»¸öDWORDÀàĞÍµÄ±äÁ¿£¬ÓÃÓÚ·µ»ØäÖÈ¾ºóµÄÊÂ¼şÓµÓĞµÄÊôĞÔÊıÁ¿¡£
+		ç”¨äºå°†äº‹ä»¶å¥æŸ„ä¸­çš„äº‹ä»¶ä¿¡æ¯æ¸²æŸ“ä¸ºXMLæ ¼å¼ï¼Œå¹¶å°†å…¶å­˜å‚¨åœ¨æŒ‡å®šçš„ç¼“å†²åŒºä¸­ã€‚ä¸‹é¢å¯¹å‡½æ•°è°ƒç”¨å‚æ•°è¿›è¡Œè¯¦ç»†è§£é‡Šï¼š
+		ç¬¬ä¸€ä¸ªå‚æ•° NULLï¼šè¡¨ç¤ºæœªä½¿ç”¨ï¼Œå®ƒæ˜¯ä¸€ä¸ªä¿ç•™å‚æ•°ï¼Œæ­¤å¤„è®¾ä¸ºNULLå³å¯ã€‚
+		ç¬¬äºŒä¸ªå‚æ•° hEvtHandleï¼šè¡¨ç¤ºäº‹ä»¶å¥æŸ„ï¼Œæ˜¯ä¸€ä¸ªEVT_HANDLEç±»å‹çš„å˜é‡ï¼Œç”¨äºæŒ‡å®šè¦æ¸²æŸ“çš„äº‹ä»¶ã€‚
+		ç¬¬ä¸‰ä¸ªå‚æ•° EvtRenderEventXmlï¼šè¡¨ç¤ºæ¸²æŸ“æ ‡å¿—ï¼ŒæŒ‡ç¤ºå°†äº‹ä»¶æ¸²æŸ“ä¸ºXMLæ ¼å¼ã€‚
+		ç¬¬å››ä¸ªå‚æ•° dwBufferSizeï¼šè¡¨ç¤ºç¼“å†²åŒºå¤§å°ï¼Œç”¨äºæŒ‡å®šæ¥æ”¶æ¸²æŸ“åçš„äº‹ä»¶ä¿¡æ¯æ‰€éœ€çš„ç¼“å†²åŒºå¤§å°ã€‚
+		ç¬¬äº”ä¸ªå‚æ•° pEvtDataï¼šè¡¨ç¤ºç¼“å†²åŒºæŒ‡é’ˆï¼Œç”¨äºæ¥æ”¶æ¸²æŸ“åçš„äº‹ä»¶ä¿¡æ¯ã€‚
+		ç¬¬å…­ä¸ªå‚æ•° &dwBufferUsedï¼šè¡¨ç¤ºè¾“å‡ºå‚æ•°ï¼ŒæŒ‡å‘ä¸€ä¸ªDWORDç±»å‹çš„å˜é‡ï¼Œç”¨äºè¿”å›å®é™…ä½¿ç”¨çš„ç¼“å†²åŒºå¤§å°ã€‚
+		ç¬¬ä¸ƒä¸ªå‚æ•° &dwPropertyCountï¼šè¡¨ç¤ºè¾“å‡ºå‚æ•°ï¼ŒæŒ‡å‘ä¸€ä¸ªDWORDç±»å‹çš„å˜é‡ï¼Œç”¨äºè¿”å›æ¸²æŸ“åçš„äº‹ä»¶æ‹¥æœ‰çš„å±æ€§æ•°é‡ã€‚
 		*/
 		if (!pEvtCBKContext->pCSysLogFun->m_pEvtRender(NULL, hEvtHandle, EvtRenderEventXml, dwBufferSize, pEvtData, &dwBufferUsed, &dwPropertyCount))
 		{
 			goto END;
 		}
-		//½âÎöxmlÊı¾İ
+		//è§£æxmlæ•°æ®
 		hr = CoInitialize(NULL);
 		if (FAILED(hr))
 		{
@@ -475,7 +475,7 @@ DWORD WINAPI EvtCallbackFunction(EVT_SUBSCRIBE_NOTIFY_ACTION EvtAction, PVOID pC
 		HOST_AD_SYSLOG_STRUCT oneSyslog;
 		bRet = AnalyEvtXmlData(pEvtData, pEvtCBKContext, &oneSyslog);
 
-		// »ñÈ¡ÊÂ¼şÏûÏ¢ÃèÊö
+		// è·å–äº‹ä»¶æ¶ˆæ¯æè¿°
 		pEvtCBKContext->pCSysLogFun->GetEventDescription(&oneSyslog, hEvtHandle);
 		wstring wsEventDescription = oneSyslog.wsEventDescription;
 		wstring wsEventTime = oneSyslog.wsEventTime;
@@ -629,7 +629,7 @@ BOOL FormatEventDescription(DWORD dwEventID, PCHAR pLogName, PCHAR pLogSource, P
 		}
 	}
 
-	//ÒÑ¼ÓÔØ¶ÔÓ¦¿â£¬Ö±½Ó×ª»»
+	//å·²åŠ è½½å¯¹åº”åº“ï¼Œç›´æ¥è½¬æ¢
 	if (NULL != hModule)
 	{
 		if (!FormatMessageA(dwFlags, hModule, dwEventID, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), (LPSTR)&pFormatedData, 0, (va_list*)pFormatString))
@@ -654,9 +654,9 @@ BOOL FormatEventDescription(DWORD dwEventID, PCHAR pLogName, PCHAR pLogSource, P
 		}
 	}
 
-	//Ã»ÓĞ¼ÓÔØ¶ÔÓ¦¿â£¬³¢ÊÔ¼ÓÔØ
+	//æ²¡æœ‰åŠ è½½å¯¹åº”åº“ï¼Œå°è¯•åŠ è½½
 RENEW:
-	//È¡×¢²á±íÏî
+	//å–æ³¨å†Œè¡¨é¡¹
 	if (!GetEventDescriptionDllPath(pLogName, pLogSource, sDllPath))
 	{
 		g_MapDllHModule[strSource] = NULL;
@@ -677,14 +677,14 @@ RENEW:
 		hModule = LoadLibraryExA(pRealDllPath, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
 		if (hModule)
 		{
-			//¸ñÊ½»¯Ê§°Ü
+			//æ ¼å¼åŒ–å¤±è´¥
 			if (!FormatMessageA(dwFlags, hModule, dwEventID, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), (LPSTR)&pFormatedData, 0, (va_list*)pFormatString))
 			{
 				WriteError(("FormatMessageA Failed, Dll = {}, Error = {}"), pRealDllPath, GetLastError());
 				pFormatedData = NULL;
 			}
 
-			//¸ñÊ½»¯³É¹¦£¬±£´æµ±Ç°¾ä±ú
+			//æ ¼å¼åŒ–æˆåŠŸï¼Œä¿å­˜å½“å‰å¥æŸ„
 			if (NULL != pFormatedData && strlen(pFormatedData) > 0)
 			{
 				sDescription = pFormatedData;
@@ -706,7 +706,7 @@ RENEW:
 		pCurStr = pNextStr + 1;
 	}
 
-	//Ñ­»·Íê³Éºó×îºó»¹ÓĞÒ»¸öÂ·¾¶
+	//å¾ªç¯å®Œæˆåæœ€åè¿˜æœ‰ä¸€ä¸ªè·¯å¾„
 	memset(pRealDllPath, 0, MAX_PATH);
 	ExpandEnvironmentStringsA(pCurStr, pRealDllPath, MAX_PATH - 1);
 	hModule = LoadLibraryExA(pRealDllPath, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
@@ -714,13 +714,13 @@ RENEW:
 	{
 		if (!FormatMessageA(dwFlags, hModule, dwEventID, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), (LPSTR)&pFormatedData, 0, (va_list*)pFormatString))
 		{
-			//¸ñÊ½»¯Ê§°Ü
+			//æ ¼å¼åŒ–å¤±è´¥
 			DWORD dwErr = GetLastError();
 			WriteError(("FormatMessageA Failed, Dll = {}, Error = {}"), pRealDllPath, GetLastError());
 			pFormatedData = NULL;
 		}
 
-		//¸ñÊ½»¯³É¹¦£¬±£´æµ±Ç°¾ä±ú
+		//æ ¼å¼åŒ–æˆåŠŸï¼Œä¿å­˜å½“å‰å¥æŸ„
 		if (NULL != pFormatedData && strlen(pFormatedData) > 0)
 		{
 			sDescription = pFormatedData;
@@ -899,8 +899,8 @@ BOOL AnalyEventData(PCHAR pEvtData, DWORD dwDataSize, PCHAR pChannel, HOST_AD_SY
 
 		char tmpFormatSring[1000] = { 0 };
 
-		std::wstring wsContent = _T("ÎŞ·¨ÕÒµ½À´×ÔÔ´ System µÄÊÂ¼ş ID %d µÄÃèÊö¡£±¾µØ¼ÆËã»úÉÏÎ´°²×°Òı·¢´ËÊÂ¼şµÄ×é¼ş£¬»òÕß°²×°ÒÑËğ»µ¡£¿ÉÒÔ°²×°»òĞŞ¸´±¾µØ¼ÆËã»úÉÏµÄ×é¼ş¡£\
-			Èç¹û¸ÃÊÂ¼ş²úÉúÓÚÁíÒ»Ì¨¼ÆËã»ú£¬Ôò±ØĞëÔÚ¸ÃÊÂ¼şÖĞ±£´æÏÔÊ¾ĞÅÏ¢¡£ÒÔÏÂÊÇ°üº¬ÔÚÊÂ¼şÖĞµÄĞÅÏ¢: %s ÏûÏ¢×ÊÔ´´æÔÚ£¬µ«ÔÚÏûÏ¢±íÖĞÕÒ²»µ½¸ÃÏûÏ¢¡£");
+		std::wstring wsContent = _T("æ— æ³•æ‰¾åˆ°æ¥è‡ªæº System çš„äº‹ä»¶ ID %d çš„æè¿°ã€‚æœ¬åœ°è®¡ç®—æœºä¸Šæœªå®‰è£…å¼•å‘æ­¤äº‹ä»¶çš„ç»„ä»¶ï¼Œæˆ–è€…å®‰è£…å·²æŸåã€‚å¯ä»¥å®‰è£…æˆ–ä¿®å¤æœ¬åœ°è®¡ç®—æœºä¸Šçš„ç»„ä»¶ã€‚\
+			å¦‚æœè¯¥äº‹ä»¶äº§ç”Ÿäºå¦ä¸€å°è®¡ç®—æœºï¼Œåˆ™å¿…é¡»åœ¨è¯¥äº‹ä»¶ä¸­ä¿å­˜æ˜¾ç¤ºä¿¡æ¯ã€‚ä»¥ä¸‹æ˜¯åŒ…å«åœ¨äº‹ä»¶ä¸­çš„ä¿¡æ¯: %s æ¶ˆæ¯èµ„æºå­˜åœ¨ï¼Œä½†åœ¨æ¶ˆæ¯è¡¨ä¸­æ‰¾ä¸åˆ°è¯¥æ¶ˆæ¯ã€‚");
 		std::string strContent = CStrUtil::ConvertW2A(wsContent);
 		sprintf_s(tmpFormatSring, strContent.c_str(), pEvtRecord->EventID, pBuf);
 		strDescription = tmpFormatSring;
@@ -944,7 +944,7 @@ unsigned int __stdcall CSysLogFun::DoSystemEventThread(LPVOID lpParameter)
 		goto END;
 	}
 
-	// ´ò¿ªÏµÍ³ÈÕÖ¾
+	// æ‰“å¼€ç³»ç»Ÿæ—¥å¿—
 	hSysEvent = OpenEventLogA(NULL, "System");
 	if (NULL == hSysEvent)
 	{
@@ -954,18 +954,18 @@ unsigned int __stdcall CSysLogFun::DoSystemEventThread(LPVOID lpParameter)
 
 	while (1)
 	{
-		// ÓĞÍË³öÃüÁî
+		// æœ‰é€€å‡ºå‘½ä»¤
 		if (pSysLogFun->m_ReadSystemEventThreadExit)
 		{
 			break;
 		}
 
-		// ¶ÁÈ¡ÏµÍ³ÊÂ¼ş
+		// è¯»å–ç³»ç»Ÿäº‹ä»¶
 		if (!ReadEventLogA(hSysEvent, EVENTLOG_FORWARDS_READ | EVENTLOG_SEQUENTIAL_READ, 0, Buffer, BufferSize, &dwRead, &dwNeeded))
 		{
 			if (ERROR_INSUFFICIENT_BUFFER == GetLastError())
 			{
-				// BufferSize ¿ÉÄÜ²»¹»£¬ÖØĞÂÉêÇë
+				// BufferSize å¯èƒ½ä¸å¤Ÿï¼Œé‡æ–°ç”³è¯·
 				if (Buffer)
 				{
 					free(Buffer);
@@ -978,7 +978,7 @@ unsigned int __stdcall CSysLogFun::DoSystemEventThread(LPVOID lpParameter)
 				{
 					break;
 				}
-				// Ê§°Ü¼ÇÂ¼ÈÕÖ¾
+				// å¤±è´¥è®°å½•æ—¥å¿—
 				if (!ReadEventLogA(hSysEvent, EVENTLOG_FORWARDS_READ | EVENTLOG_SEQUENTIAL_READ, 0, Buffer, BufferSize, &dwRead, &dwNeeded))
 				{
 					// log
@@ -988,7 +988,7 @@ unsigned int __stdcall CSysLogFun::DoSystemEventThread(LPVOID lpParameter)
 			}
 			else if (ERROR_HANDLE_EOF == GetLastError())
 			{
-				// ¶ÁÈ¡Íê±Ï,µÈ´ıÒ»¶ÎÊ±¼äºó¼ÌĞø¶ÁÈ¡ 5s
+				// è¯»å–å®Œæ¯•,ç­‰å¾…ä¸€æ®µæ—¶é—´åç»§ç»­è¯»å– 5s
 				Sleep(5 * 1000);
 				continue;
 			}

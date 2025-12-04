@@ -5,222 +5,180 @@
 #include <windows.h>
 #include <CommCtrl.h>
 
-CMessageHelper::CMessageHelper()
-{
-	m_pCWLMetaDataQueue = new CWLMetaDataQueue();
+CMessageHelper::CMessageHelper() {
+    m_pCWLMetaDataQueue = new CWLMetaDataQueue();
 }
 
-CMessageHelper::~CMessageHelper()
-{
-	if (m_pCWLMetaDataQueue)
-	{
-		delete m_pCWLMetaDataQueue;
-	}
-
+CMessageHelper::~CMessageHelper() {
+    if (m_pCWLMetaDataQueue) {
+        delete m_pCWLMetaDataQueue;
+    }
 }
-BOOL CMessageHelper::InitMessageHelper()
-{
-	HANDLE hGetMessageThread = (HANDLE)_beginthreadex(NULL, 0, GetMessageThread, this, 0, NULL);
-	HANDLE hDispatchMessageThread = (HANDLE)_beginthreadex(NULL, 0, DispatchMessageThread, this, 0, NULL);
+BOOL CMessageHelper::InitMessageHelper() {
+    HANDLE hGetMessageThread      = (HANDLE)_beginthreadex(NULL, 0, GetMessageThread, this, 0, NULL);
+    HANDLE hDispatchMessageThread = (HANDLE)_beginthreadex(NULL, 0, DispatchMessageThread, this, 0, NULL);
 
-	if (hGetMessageThread)
-	{
-		CloseHandle(hGetMessageThread);
-	}
-	if (hDispatchMessageThread)
-	{
-		CloseHandle(hDispatchMessageThread);
-	}
-	return 0;
+    if (hGetMessageThread) {
+        CloseHandle(hGetMessageThread);
+    }
+    if (hDispatchMessageThread) {
+        CloseHandle(hDispatchMessageThread);
+    }
+    return 0;
 }
 
-//¥¥Ω®œ˚œ¢≤…ºØœﬂ≥Ã£¨∏∫‘Ω´œ˚œ¢¥”π≤œÌƒ⁄¥Ê÷–»°≥ˆ¿¥¥Ê∑≈µΩQueue÷–
-unsigned int WINAPI CMessageHelper::GetMessageThread(LPVOID lpParameter)
-{
-	if (!lpParameter)
-	{
-		return 0;
-	}
+// ÂàõÂª∫Ê∂àÊÅØÈááÈõÜÁ∫øÁ®ãÔºåË¥üË¥£Â∞ÜÊ∂àÊÅØ‰ªéÂÖ±‰∫´ÂÜÖÂ≠ò‰∏≠ÂèñÂá∫Êù•Â≠òÊîæÂà∞Queue‰∏≠
+unsigned int WINAPI CMessageHelper::GetMessageThread(LPVOID lpParameter) {
+    if (!lpParameter) {
+        return 0;
+    }
 
-	CMessageHelper* pMessageHelper = (CMessageHelper*)lpParameter;
-	CWLIPCMmf* pIPCContainer = new CWLIPCMmf(IPC_CFG_MMF_NAME_SERVER, IPC_CFG_MUTEX_NAME_SERVER, NULL, DEFAULT_MMF_BUFFER_SIZE);
-	while (true)
-	{
-		BYTE* pMsgData = NULL;
-		DWORD dwSize = 0;
+    CMessageHelper* pMessageHelper = (CMessageHelper*)lpParameter;
+    CWLIPCMmf*      pIPCContainer  = new CWLIPCMmf(IPC_CFG_MMF_NAME_SERVER, IPC_CFG_MUTEX_NAME_SERVER, NULL, DEFAULT_MMF_BUFFER_SIZE);
+    while (true) {
+        BYTE* pMsgData = NULL;
+        DWORD dwSize   = 0;
 
-		if (ERROR_SUCCESS == pIPCContainer->ReadData(dwSize, pMsgData))
-		{
-			try
-			{
-				DWORD dwSizeDone = 0;
-				while (dwSizeDone + IPC_MSG_DATA_HEADNER_LEN <= dwSize)
-				{
-					IPC_MSG_DATA* pMsg = reinterpret_cast<IPC_MSG_DATA*>(pMsgData + dwSizeDone);
-					pMessageHelper->m_pCWLMetaDataQueue->Insert(pMsg);
-					dwSizeDone += IPC_MSG_DATA_HEADNER_LEN + pMsg->dwSize;
-				}
-			}
-			catch (exception e)
-			{
-				WriteError(("catch exception {}"), e.what());
-			}
-			catch (...)
-			{
-				WriteError(("unexception catch error."));
-			}
-		}
+        if (ERROR_SUCCESS == pIPCContainer->ReadData(dwSize, pMsgData)) {
+            try {
+                DWORD dwSizeDone = 0;
+                while (dwSizeDone + IPC_MSG_DATA_HEADNER_LEN <= dwSize) {
+                    IPC_MSG_DATA* pMsg = reinterpret_cast<IPC_MSG_DATA*>(pMsgData + dwSizeDone);
+                    pMessageHelper->m_pCWLMetaDataQueue->Insert(pMsg);
+                    dwSizeDone += IPC_MSG_DATA_HEADNER_LEN + pMsg->dwSize;
+                }
+            } catch (exception e) {
+                WriteError(("catch exception {}"), e.what());
+            } catch (...) {
+                WriteError(("unexception catch error."));
+            }
+        }
 
-		Sleep(1000);
-	}
+        Sleep(1000);
+    }
 
-	if (pIPCContainer)
-	{
-		delete pIPCContainer;
-	}
+    if (pIPCContainer) {
+        delete pIPCContainer;
+    }
 
-	_endthreadex(0);
-	return 0;
+    _endthreadex(0);
+    return 0;
 }
 
-unsigned int WINAPI CMessageHelper::DispatchMessageThread(LPVOID lpParameter)
-{
-	if (!lpParameter)
-	{
-		return 0;
-	}
+unsigned int WINAPI CMessageHelper::DispatchMessageThread(LPVOID lpParameter) {
+    if (!lpParameter) {
+        return 0;
+    }
 
-	CMessageHelper* pMessageHelper = (CMessageHelper*)lpParameter;
+    CMessageHelper* pMessageHelper = (CMessageHelper*)lpParameter;
 
-	while (true)
-	{
-		if (pMessageHelper->m_pCWLMetaDataQueue->GetCount() > 0)
-		{
-			IPC_MSG_DATA* MessageData = pMessageHelper->m_pCWLMetaDataQueue->GetHead();
-			pMessageHelper->DispatchMessageFun(MessageData);
-		}
-	}
+    while (true) {
+        if (pMessageHelper->m_pCWLMetaDataQueue->GetCount() > 0) {
+            IPC_MSG_DATA* MessageData = pMessageHelper->m_pCWLMetaDataQueue->GetHead();
+            pMessageHelper->DispatchMessageFun(MessageData);
+        }
+    }
 
-	_endthreadex(0);
-	return 0;
+    _endthreadex(0);
+    return 0;
 }
 
-//œ˚œ¢∑÷∑¢ƒ£øÈ
-BOOL CMessageHelper::DispatchMessageFun(IPC_MSG_DATA* MessageData)
-{
-	IComponent* Component = nullptr;
-	switch (MessageData->dwEventType)
-	{
-	case CLIENT_MSG_CODE_DEVICE_CONTROL:
-		Component = *g_IComponentVector[DEVICECONTROL];
-		Component->DispatchMessages(MessageData);
-		break;
-	case CLIENT_MSG_CODE_SYSTEMLOG_CONTROL:
-		Component = *g_IComponentVector[SYSTEMLOGCONTROL];
-		Component->DispatchMessages(MessageData);
-		break;
-	case CLIENT_MSG_CODE_FILESCAN_CONTROL:
-		Component = *g_IComponentVector[FILESCANCONTROL];
-		Component->DispatchMessages(MessageData);
-		break;
-	case CLIENT_MSG_CODE_FIREWALL_CONTROL:
-        Component = *g_IComponentVector[FIREWALLCONTROL];
-		Component->DispatchMessages(MessageData);
-		break;
-	case CLIENT_MSG_CODE_CLIPBOARD_CONTROL:
-        Component = *g_IComponentVector[CLIPBOARDCONTROL];
-		Component->DispatchMessages(MessageData);
-		break;
-	default:
-		break;
-	}
-	return 0;
+// Ê∂àÊÅØÂàÜÂèëÊ®°Âùó
+BOOL CMessageHelper::DispatchMessageFun(IPC_MSG_DATA* MessageData) {
+    IComponent* Component = nullptr;
+    switch (MessageData->dwEventType) {
+        case CLIENT_MSG_CODE_DEVICE_CONTROL:
+            Component = *g_IComponentVector[DEVICECONTROL];
+            Component->DispatchMessages(MessageData);
+            break;
+        case CLIENT_MSG_CODE_SYSTEMLOG_CONTROL:
+            Component = *g_IComponentVector[SYSTEMLOGCONTROL];
+            Component->DispatchMessages(MessageData);
+            break;
+        case CLIENT_MSG_CODE_FILESCAN_CONTROL:
+            Component = *g_IComponentVector[FILESCANCONTROL];
+            Component->DispatchMessages(MessageData);
+            break;
+        case CLIENT_MSG_CODE_FIREWALL_CONTROL:
+            Component = *g_IComponentVector[FIREWALLCONTROL];
+            Component->DispatchMessages(MessageData);
+            break;
+        case CLIENT_MSG_CODE_CLIPBOARD_CONTROL:
+            Component = *g_IComponentVector[CLIPBOARDCONTROL];
+            Component->DispatchMessages(MessageData);
+            break;
+        default:
+            break;
+    }
+    return 0;
 }
 
+int main(int argc, char** argv) {
+    WriteInfo("===================Service Begin=====================");
+    // Èò≤Ê≠¢Â§ö‰∏™ÊúçÂä°ÂêåÊó∂ËøêË°å
+    HANDLE hEvent_WLService = CreateEvent(NULL, FALSE, FALSE, WL_SERVICE_SINGTON_EVENT_NAME);
+    if (!hEvent_WLService) {
+        WriteError(("CreateEvent WL_SERVICE_SINGTON_EVENT_NAME fail, errno={}"), GetLastError());
+        return 0;
+    } else if (ERROR_ALREADY_EXISTS == GetLastError()) {
+        WriteInfo(("WLSERVICE ERROR_ALREADY_EXISTS"));
+        CloseHandle(hEvent_WLService);
+        return 0;
+    }
 
+    string HardDriveSerialNumber;
+    CGetHardDiskSerialNumber::GetHardDriveSerialNumber(HardDriveSerialNumber);  // Ëé∑ÂèñÁ≥ªÁªüÁ°¨ÁõòÂ∫èÂàóÂè∑
 
-int main(int argc, char** argv)
-{
-	WriteInfo("===================Service Begin=====================");
-	//∑¿÷π∂‡∏ˆ∑˛ŒÒÕ¨ ±‘À––
-	HANDLE hEvent_WLService = CreateEvent(NULL, FALSE, FALSE, WL_SERVICE_SINGTON_EVENT_NAME);
-	if (!hEvent_WLService)
-	{
-		WriteError(("CreateEvent WL_SERVICE_SINGTON_EVENT_NAME fail, errno={}"), GetLastError());
-		return 0;
-	}
-	else if (ERROR_ALREADY_EXISTS == GetLastError())
-	{
-		WriteInfo(("WLSERVICE ERROR_ALREADY_EXISTS"));
-		CloseHandle(hEvent_WLService);
-		return 0;
-	}
+    IComponent* pIComponent = nullptr;
+    for (auto& wstDLLName : g_LoadMoudleVector) {
+        HMODULE      hMoudle = ::LoadLibrary(wstDLLName.c_str());
+        ICOMFUNCTION lpproc  = (ICOMFUNCTION)GetProcAddress(hMoudle, "GetComInstance");
+        if (lpproc) {
+            auto Instance                  = lpproc();
+            g_IComponentVector[wstDLLName] = std::make_shared<IComponent*>(Instance);
+        } else {
+            WriteError("LoadLibrary failed");
+        }
+    }
 
-	string HardDriveSerialNumber;
-	CGetHardDiskSerialNumber::GetHardDriveSerialNumber(HardDriveSerialNumber);    //ªÒ»°œµÕ≥”≤≈Ã–Ú¡–∫≈
+    CMessageHelper::GetInstance().InitMessageHelper();
 
-	IComponent* pIComponent = nullptr;
-	for (auto& wstDLLName : g_LoadMoudleVector)
-	{
-		HMODULE hMoudle = ::LoadLibrary(wstDLLName.c_str());
-		ICOMFUNCTION lpproc = (ICOMFUNCTION)GetProcAddress(hMoudle, "GetComInstance");
-		if (lpproc)
-		{
-			auto Instance = lpproc();
-			g_IComponentVector[wstDLLName] = std::make_shared<IComponent*>(Instance);
-		}
-		else
-		{
-			WriteError("LoadLibrary failed");
-		}
-	}
+    /*
+    for (const auto& ComponentPtr : g_IComponentVector)
+    {
+            IComponent* Component = *ComponentPtr;
+            Component->EnableFunction();
+    }
+    */
 
-	CMessageHelper::GetInstance().InitMessageHelper();
+    /*
+    // ‰ΩøÁî® lambda Ë°®ËææÂºèÊâßË°å EnableFunction Êìç‰Ωú
+    std::for_each(g_IComponentVector.begin(), g_IComponentVector.end(), [](std::shared_ptr<IComponent*> componentPtr) {
+            IComponent* component = *(componentPtr.get());
+            component->EnableFunction();
+            });
+    */
 
-	/*
-	for (const auto& ComponentPtr : g_IComponentVector)
-	{
-		IComponent* Component = *ComponentPtr;
-		Component->EnableFunction();
-	}
-	*/
+    for (;;) {
+        Sleep(1000);
+    }
 
-	/*
-	//  π”√ lambda ±Ì¥Ô Ω÷¥–– EnableFunction ≤Ÿ◊˜
-	std::for_each(g_IComponentVector.begin(), g_IComponentVector.end(), [](std::shared_ptr<IComponent*> componentPtr) {
-		IComponent* component = *(componentPtr.get());
-		component->EnableFunction();
-		});
-	*/
+    for (const auto& ComponentPtr : g_IComponentVector) {
+        IComponent* Component = *ComponentPtr.second;
+        Component->DisableFunction();
+    }
 
-	
-	for (;;)
-	{
-		Sleep(1000);
-	}
-	
+    for (auto& wstDLLName : g_LoadMoudleVector) {
+        HMODULE            hMoudle = ::LoadLibrary(wstDLLName.c_str());
+        RELEASECOMINSTANCE lpproc  = (RELEASECOMINSTANCE)GetProcAddress(hMoudle, "ReleaseComInstance");
+        if (lpproc) {
+            // CUDiskÊòØÈÄöËøáNewÂàõÂª∫ÁöÑÔºåÊâÄ‰ª•ÈúÄË¶ÅÈáäÊîæ
+            // ÂÖ∂‰ªñÊ®°ÂùóÊòØStaticÂàõÂª∫ÁöÑÔºå‰∏çÈúÄË¶ÅÈáäÊîæ
+            lpproc();
+        } else {
+            WriteError("LoadLibrary failed");
+        }
+    }
 
-	for (const auto& ComponentPtr : g_IComponentVector)
-	{
-		IComponent* Component = *ComponentPtr.second;
-		Component->DisableFunction();
-	}
-
-	for (auto& wstDLLName : g_LoadMoudleVector)
-	{
-		HMODULE hMoudle = ::LoadLibrary(wstDLLName.c_str());
-		RELEASECOMINSTANCE lpproc = (RELEASECOMINSTANCE)GetProcAddress(hMoudle, "ReleaseComInstance");
-		if (lpproc)
-		{
-			//CUDisk «Õ®π˝New¥¥Ω®µƒ£¨À˘“‘–Ë“™ Õ∑≈
-			//∆‰À˚ƒ£øÈ «Static¥¥Ω®µƒ£¨≤ª–Ë“™ Õ∑≈
-			lpproc();
-		}
-		else
-		{
-			WriteError("LoadLibrary failed");
-		}
-	}
-
-	return 0;
+    return 0;
 }

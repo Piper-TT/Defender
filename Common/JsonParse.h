@@ -11,7 +11,7 @@ using namespace std;
 
 #define JSON_DEFAULT_STRING		"-"
 
-//JsonHelper¹¦ÄÜÀà
+//JsonHelperåŠŸèƒ½ç±»
 class JsonHelper
 {
 public:

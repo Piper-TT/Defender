@@ -52,19 +52,19 @@ do{		\
 
 typedef struct _LIST_HEAD LIST_HEAD;
 typedef BOOL (* HAHSTB_RELEASE)(LIST_HEAD * head,BOOL allref,UCHAR type);
-//±È½ÏÊÇ·ñÒ»ÖÂµÄcallback
+//æ¯”è¾ƒæ˜¯å¦ä¸€è‡´çš„callback
 typedef BOOL (* HAHSTB_COMPARE)(void* KeyPtr1,void* KeyPtr2);
 typedef unsigned char* (* HAHSTB_VALUE)(LIST_HEAD * head,UCHAR type);  
-//ÓÃ»§×Ô¼º¶¨Òå¼ÆËãhashµÄcallback£¨HAHSTB_Calc£©
+//ç”¨æˆ·è‡ªå·±å®šä¹‰è®¡ç®—hashçš„callbackï¼ˆHAHSTB_Calcï¼‰
 typedef unsigned int  (* HAHSTB_Calc)(void *table,void* valPtr);  
 
 typedef struct _PE_CACHE_ITEM_KEY
 {
-	std::wstring FilePathBuffer;			//ÎÄ¼şÂ·¾¶
-	int	   FilePathLen;				//ÎÄ¼şÂ·¾¶³¤¶È
+	std::wstring FilePathBuffer;			//æ–‡ä»¶è·¯å¾„
+	int	   FilePathLen;				//æ–‡ä»¶è·¯å¾„é•¿åº¦
 	//UNICODE_STRING FilePath;
-	ULONGLONG  FileSize;			//ÎÄ¼ş´óĞ¡
-	ULONGLONG  LastWriteTime;    //ÎÄ¼şÏµÍ³ÖĞÉÏÒ»´ËĞ´ÎÄ¼şµÄÊ±¼ä
+	ULONGLONG  FileSize;			//æ–‡ä»¶å¤§å°
+	ULONGLONG  LastWriteTime;    //æ–‡ä»¶ç³»ç»Ÿä¸­ä¸Šä¸€æ­¤å†™æ–‡ä»¶çš„æ—¶é—´
 }PE_CACHE_ITEM_KEY;
 
 struct _LIST_HEAD
@@ -75,12 +75,12 @@ struct _LIST_HEAD
 
 typedef struct __HASHTB
 {
-	unsigned short		bucket_count;	//hash±íµÄÍ°Êı
-	unsigned int        valueLen;		//valueµÄ³¤¶È
-	LIST_HEAD * 		hash_list;		//hash±í Êı×é£¬Ã¿¸öÔªËØÊÇÒ»¸öÁ´±í
-	long				item_count;		//hash±íÖĞµÄÔªËØ¸öÊı
-	UCHAR				type;			//hash±íµÄÀàĞÍ
-	std::mutex			ListMutex;		//hash±íµÄËø
+	unsigned short		bucket_count;	//hashè¡¨çš„æ¡¶æ•°
+	unsigned int        valueLen;		//valueçš„é•¿åº¦
+	LIST_HEAD * 		hash_list;		//hashè¡¨ æ•°ç»„ï¼Œæ¯ä¸ªå…ƒç´ æ˜¯ä¸€ä¸ªé“¾è¡¨
+	long				item_count;		//hashè¡¨ä¸­çš„å…ƒç´ ä¸ªæ•°
+	UCHAR				type;			//hashè¡¨çš„ç±»å‹
+	std::mutex			ListMutex;		//hashè¡¨çš„é”
 
 	HAHSTB_RELEASE 	    release_item; 
 	HAHSTB_VALUE  		get_value;
@@ -90,17 +90,17 @@ typedef struct __HASHTB
 }HASHTB;
 
 
-//½«ÒÑ¾­ÅĞ¶Ï¹ı°×Ãûµ¥µÄĞÅÏ¢£¬×éÖ¯³ÉÁ´±í»º´æ£¬¹©²éÑ¯ÒÔ¼õÉÙ
+//å°†å·²ç»åˆ¤æ–­è¿‡ç™½åå•çš„ä¿¡æ¯ï¼Œç»„ç»‡æˆé“¾è¡¨ç¼“å­˜ï¼Œä¾›æŸ¥è¯¢ä»¥å‡å°‘
 
 typedef struct _PE_CACHE_ITEM
 {
-	LIST_HEAD head;					//hashtabÍ·
+	LIST_HEAD head;					//hashtabå¤´
 	//compare content
-	PE_CACHE_ITEM_KEY Key;			//hashtab keyÖµ
+	PE_CACHE_ITEM_KEY Key;			//hashtab keyå€¼
 
-	std::wstring			wstrFileHash;	//ÎÄ¼ş¹şÏ£ 
+	std::wstring			wstrFileHash;	//æ–‡ä»¶å“ˆå¸Œ 
 	//access time.
-	LARGE_INTEGER			InsertTime;  //ÌõÄ¿²åÈë»òÕß¸üĞÂµÄÊ±¼ä
+	LARGE_INTEGER			InsertTime;  //æ¡ç›®æ’å…¥æˆ–è€…æ›´æ–°çš„æ—¶é—´
 }
 PE_CACHE_ITEM,*PPE_CACHE_ITEM;
 

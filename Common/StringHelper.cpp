@@ -19,7 +19,7 @@ string CStrUtil::ConvertW2A(const wstring& wstr)
 wstring CStrUtil::ConvertA2W(const string& str)
 {
 	int bufferSize = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
-	std::wstring result(bufferSize - 1, L'\0');  // ¼õÈ¥ÖÕÖ¹·ûµÄ¿Õ¼ä
+	std::wstring result(bufferSize - 1, L'\0');  // å‡å»ç»ˆæ­¢ç¬¦çš„ç©ºé—´
 	MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &result[0], bufferSize - 1);
 	return result;
 }
@@ -70,7 +70,7 @@ wstring CStrUtil::convertTimeTToStr(const time_t& time)
 {
 	std::wstring  wsTime;
 	struct tm tm_time = {0};
-	localtime_s(&tm_time, &time);//°ÑUTCÊ±¼ä×ª³É±¾µØÊ±¼ä¡£ËùÒÔÔÚÊı¾İ¿âÖĞÖĞ±£´æµÄÊ±¼ä¶¼ÊÇutcÊ±¼ä¡£
+	localtime_s(&tm_time, &time);//æŠŠUTCæ—¶é—´è½¬æˆæœ¬åœ°æ—¶é—´ã€‚æ‰€ä»¥åœ¨æ•°æ®åº“ä¸­ä¸­ä¿å­˜çš„æ—¶é—´éƒ½æ˜¯utcæ—¶é—´ã€‚
 	TCHAR szTime[1024] = {0};
 	_stprintf_s (szTime, _T("%4d-%02d-%02d %02d-%02d-%02d"), tm_time.tm_year + 1900,
 		tm_time.tm_mon + 1, tm_time.tm_mday, tm_time.tm_hour,

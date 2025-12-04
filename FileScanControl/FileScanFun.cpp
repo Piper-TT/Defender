@@ -3,313 +3,270 @@
 #include "FeatureDB.h"
 #include "FileEAHelper.h"
 
-CFileScanFun::CFileScanFun()
-{
-	BOOL bRet = CFeatureDB::GetInstance()->Init();
-	if (bRet)
-	{
-		CFeatureDB::GetInstance()->Load();  // ¼ÓÔØÌØÕ÷¿â
-	}
-	
-	m_bStopSearch = FALSE;
+CFileScanFun::CFileScanFun() {
+    BOOL bRet = CFeatureDB::GetInstance()->Init();
+    if (bRet) {
+        CFeatureDB::GetInstance()->Load();  // åŠ è½½ç‰¹å¾åº“
+    }
+
+    m_bStopSearch = FALSE;
 }
 
-CFileScanFun::~CFileScanFun()
-{
-	if (m_PeCacheHelper)
-	{
-		m_PeCacheHelper->PE_CACHE_Clear_AllCache();
-		delete m_PeCacheHelper;
-		m_PeCacheHelper = nullptr;
-	}
+CFileScanFun::~CFileScanFun() {
+    if (m_PeCacheHelper) {
+        m_PeCacheHelper->PE_CACHE_Clear_AllCache();
+        delete m_PeCacheHelper;
+        m_PeCacheHelper = nullptr;
+    }
 }
 
 int multiply_return(const int a, const int b) {
-  const int res = a * b;
-  std::cout << a << " * " << b << " = " << res << std::endl;
-  return res;
+    const int res = a * b;
+    std::cout << a << " * " << b << " = " << res << std::endl;
+    return res;
 }
 
+BOOL CFileScanFun::EnableScanFileFunction() {
+    ThreadPool Pool(5);
+    // èŽ·å–æ‰€æœ‰é€»è¾‘é©±åŠ¨å™¨
+    DWORD   drives = GetLogicalDrives();
+    DWORD   count  = 0;
+    wstring wstrDrive;
+    if (!m_PeCacheHelper) {
+        m_PeCacheHelper = new PECacheHelper();
+    }
 
-BOOL CFileScanFun::EnableScanFileFunction()
-{
-	ThreadPool Pool(5);
-	//»ñÈ¡ËùÓÐÂß¼­Çý¶¯Æ÷
-	DWORD drives = GetLogicalDrives();
-	DWORD count = 0;
-	wstring wstrDrive;
-	if (!m_PeCacheHelper)
-	{
-		m_PeCacheHelper = new PECacheHelper();
-	}
+    Pool.init();
 
-	Pool.init();
+    wchar_t FileName[MAX_PATH] = {0};
+    Pool.submit(multiply_return, 2, 7);
 
-	wchar_t FileName[MAX_PATH] = { 0 };
-	Pool.submit(multiply_return,2,7);
+    Pool.shutdown();
 
+    FileEAHelper::WriteFileExAttr("md5.exe", "WLHASH", "1234");
 
-	Pool.shutdown();
+    /*
+    for (TCHAR letter = 'A'; letter <= 'Z'; ++letter)
+    {
+            if ((drives & 1) == 1)
+            {
+                    wchar_t FileName[MAX_PATH] = { 0 };
+                    swprintf_s(FileName, MAX_PATH, _T("%c:\\"), letter);
+                    FileScanThreadPool.enqueue([FileName]() {
+                            CFileScanFun File;
+                            File.GetFileListByFolder(wstring(FileName));
+                    });
+            }
+            drives >>= 1;
+    }
+    */
 
-	
-	FileEAHelper::WriteFileExAttr("md5.exe", "WLHASH", "1234");
-
-	/*
-	for (TCHAR letter = 'A'; letter <= 'Z'; ++letter)
-	{
-		if ((drives & 1) == 1)
-		{
-			wchar_t FileName[MAX_PATH] = { 0 };
-			swprintf_s(FileName, MAX_PATH, _T("%c:\\"), letter);
-			FileScanThreadPool.enqueue([FileName]() {
-				CFileScanFun File;
-				File.GetFileListByFolder(wstring(FileName));
-			});
-		}
-		drives >>= 1;
-	}
-	*/
-
-	WriteInfo(("END"));
-	return 0;
+    WriteInfo(("END"));
+    return 0;
 }
 
-BOOL  CFileScanFun::GetFileListByFolder(const std::wstring wstrFolder)
-{
-	std::wstring		strFullMask;
-	std::wstring		wstrSubFolder;
-	std::wstring		strCurFolder;
-	std::string			strFileName;
+BOOL CFileScanFun::GetFileListByFolder(const std::wstring wstrFolder) {
+    std::wstring strFullMask;
+    std::wstring wstrSubFolder;
+    std::wstring strCurFolder;
+    std::string  strFileName;
 
-	static DWORD 		dwFileCount = 0;
+    static DWORD dwFileCount = 0;
 
-	static int cnt = 0;
-	long long handle; //ÎÄ¼þ¾ä±ú
-	size_t len = 0;
-	size_t pos = 0;
-	size_t find_ret = wstring::npos;
-	wstring strTail;
-	struct _wfinddata_t finder;           //ÎÄ¼þÐÅÏ¢µÄ½á¹¹Ìå
-	/* win32 Á´½ÓÎÄ¼þÓÐ4ÖÖ
-	  ÀàÐÍ
-	1.¿ì½Ý·½Ê½ £¨ÎÄ¼þ»òÄ¿Â¼£©ÎÄ¼þÊôÐÔÓëÆÕÍ¨ÎÄ¼þÏàÍ¬£¬Í¨¹ýºó×º.linkÊ¶±ð ¾ÍÊÇÒ»ÖÖÆÕÍ¨ÎÄ¼þÓÉexplorer.exe½ø³Ì½âÎö/Î¬»¤ ·ÇÄÚºËÎ¬»¤
-	2.Ó²Á´½Ó £¨Ö»ÄÜÊÇÎÄ¼þ£© ¾ÍÊÇÆÕÍ¨ÎÄ¼þ£¬ÎÞ·¨ÓëÕæÉíÇø±ð »òÕßËµÃ¿¸ö¶¼ÊÇÕæÉí ÀàÐÍÓÉÄÚºËÎ¬»¤
-	3.ÈíÁ´½Ó  £¨Ö»ÄÜÊÇÄ¿Â¼£©Í¨¹ýÎÄ¼þÊôÐÔFILE_ATTRIBUTE_REPARSE_POINTÊ¶±ð£¬ÔÝ²»ÖªÈçºÎÓë·ûºÅÁ´½ÓÇø±ð ÀàÐÍÓÉÄÚºËÎ¬»¤
-	4.·ûºÅÁ´½Ó £¨ÎÄ¼þ»òÄ¿Â¼£© Í¨¹ýÎÄ¼þÊôÐÔFILE_ATTRIBUTE_REPARSE_POINTÊ¶±ð£¬ÔÝ²»ÖªÈçºÎÓëÈíÁ´½ÓÇø±ð ÀàÐÍÓÉÄÚºËÎ¬»¤
-	¶ÔÓÚ³ýÓ²Á´½ÓÖ®Íâ µÄÈ«²¿²»É¨Ãè£¡
+    static int          cnt = 0;
+    long long           handle;  // æ–‡ä»¶å¥æŸ„
+    size_t              len      = 0;
+    size_t              pos      = 0;
+    size_t              find_ret = wstring::npos;
+    wstring             strTail;
+    struct _wfinddata_t finder;  // æ–‡ä»¶ä¿¡æ¯çš„ç»“æž„ä½“
+    /* win32 é“¾æŽ¥æ–‡ä»¶æœ‰4ç§
+      ç±»åž‹
+    1.å¿«æ·æ–¹å¼ ï¼ˆæ–‡ä»¶æˆ–ç›®å½•ï¼‰æ–‡ä»¶å±žæ€§ä¸Žæ™®é€šæ–‡ä»¶ç›¸åŒï¼Œé€šè¿‡åŽç¼€.linkè¯†åˆ« å°±æ˜¯ä¸€ç§æ™®é€šæ–‡ä»¶ç”±explorer.exeè¿›ç¨‹è§£æž/ç»´æŠ¤ éžå†…æ ¸ç»´æŠ¤
+    2.ç¡¬é“¾æŽ¥ ï¼ˆåªèƒ½æ˜¯æ–‡ä»¶ï¼‰ å°±æ˜¯æ™®é€šæ–‡ä»¶ï¼Œæ— æ³•ä¸ŽçœŸèº«åŒºåˆ« æˆ–è€…è¯´æ¯ä¸ªéƒ½æ˜¯çœŸèº« ç±»åž‹ç”±å†…æ ¸ç»´æŠ¤
+    3.è½¯é“¾æŽ¥  ï¼ˆåªèƒ½æ˜¯ç›®å½•ï¼‰é€šè¿‡æ–‡ä»¶å±žæ€§FILE_ATTRIBUTE_REPARSE_POINTè¯†åˆ«ï¼Œæš‚ä¸çŸ¥å¦‚ä½•ä¸Žç¬¦å·é“¾æŽ¥åŒºåˆ« ç±»åž‹ç”±å†…æ ¸ç»´æŠ¤
+    4.ç¬¦å·é“¾æŽ¥ ï¼ˆæ–‡ä»¶æˆ–ç›®å½•ï¼‰ é€šè¿‡æ–‡ä»¶å±žæ€§FILE_ATTRIBUTE_REPARSE_POINTè¯†åˆ«ï¼Œæš‚ä¸çŸ¥å¦‚ä½•ä¸Žè½¯é“¾æŽ¥åŒºåˆ« ç±»åž‹ç”±å†…æ ¸ç»´æŠ¤
+    å¯¹äºŽé™¤ç¡¬é“¾æŽ¥ä¹‹å¤– çš„å…¨éƒ¨ä¸æ‰«æï¼
 
-	*/
-	//ÅÐ¶ÏÊÇ·ñÊÇ.linkÎÄ¼þ
-	len = wstrFolder.length();
-	if (len > 6) /* ×Ö·û´®".link/" µÄ³¤¶È */
-	{
-		pos = len - 6;
-	}
+    */
+    // åˆ¤æ–­æ˜¯å¦æ˜¯.linkæ–‡ä»¶
+    len = wstrFolder.length();
+    if (len > 6) /* å­—ç¬¦ä¸²".link/" çš„é•¿åº¦ */
+    {
+        pos = len - 6;
+    }
 
-	/* Èç¹ûÕÒµ½ÁË */
-	strTail = wstrFolder.substr(pos, 6);
-	if (!_tcsicmp(strTail.c_str(), _T(".link/")))
-	{
+    /* å¦‚æžœæ‰¾åˆ°äº† */
+    strTail = wstrFolder.substr(pos, 6);
+    if (!_tcsicmp(strTail.c_str(), _T(".link/"))) {
+        WriteInfo((" skip quick link path= {}"), CStrUtil::ConvertW2A(wstrFolder).c_str());
+        return 0;
+    }
 
-		WriteInfo((" skip quick link path= {}"), CStrUtil::ConvertW2A(wstrFolder).c_str());
-		return 0;
-	}
+    DWORD attr = GetFileAttributes(wstrFolder.c_str());
+    if (attr == INVALID_FILE_ATTRIBUTES) {
+        WriteInfo(("GetFileAttributes return attr is INVALID_FILE_ATTRIBUTES, Folder = {}"), CStrUtil::ConvertW2A(wstrFolder).c_str());
+        return 0;
+    }
+    if (attr & FILE_ATTRIBUTE_REPARSE_POINT) {
+        WriteInfo((" skip soft/symbol link path= {}"), CStrUtil::ConvertW2A(wstrFolder).c_str());
+        return 0;
+    } else if (attr & FILE_ATTRIBUTE_DIRECTORY) {
+        strFullMask = wstrFolder + std::wstring(_T("*.*"));
+    } else {
+        strFullMask = wstrFolder;
+    }
 
-	DWORD attr = GetFileAttributes(wstrFolder.c_str());
-	if (attr == INVALID_FILE_ATTRIBUTES)
-	{
-		WriteInfo(("GetFileAttributes return attr is INVALID_FILE_ATTRIBUTES, Folder = {}"), CStrUtil::ConvertW2A(wstrFolder).c_str());
-		return 0;
-	}
-	if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
-	{
-		WriteInfo((" skip soft/symbol link path= {}"), CStrUtil::ConvertW2A(wstrFolder).c_str());
-		return 0;
-	}
-	else if (attr & FILE_ATTRIBUTE_DIRECTORY)
-	{
-		strFullMask = wstrFolder + std::wstring(_T("*.*"));
-	}
-	else
-	{
-		strFullMask = wstrFolder;
-	}
+    handle = _wfindfirst(strFullMask.c_str(), &finder);  // ç¬¬ä¸€æ¬¡æŸ¥æ‰¾
+    if (-1 == handle) {
+        return -1;
+    }
 
-	handle = _wfindfirst(strFullMask.c_str(), &finder); //µÚÒ»´Î²éÕÒ
-	if (-1 == handle)
-	{
-		return -1;
-	}
+    do {
+        if (finder.attrib & _A_SUBDIR)                                                      // å¦‚æžœæ˜¯ç›®å½•åˆ™é€’å½’;
+        {
+            if (0 == _tcscmp(finder.name, _T(".")) || 0 == _tcscmp(finder.name, _T("..")))  // å¦‚æžœæ˜¯.æˆ–..åˆ™è¿‡æ»¤;
+                continue;
 
-	do
-	{
-		if (finder.attrib & _A_SUBDIR)  //Èç¹ûÊÇÄ¿Â¼ÔòµÝ¹é;
-		{
-			if (0 == _tcscmp(finder.name, _T(".")) || 0 == _tcscmp(finder.name, _T("..")))//Èç¹ûÊÇ.»ò..Ôò¹ýÂË;
-				continue;
+            wstrSubFolder = wstrFolder + finder.name + _T("\\");
 
-			wstrSubFolder = wstrFolder + finder.name + _T("\\");
+            strCurFolder = wstrSubFolder;
 
-			strCurFolder = wstrSubFolder;
+            // if (m_pFileFinderProc != NULL && !m_bStopSearch)
+            //	m_pFileFinderProc(this, FF_FOLDER, m_pCustomParam);
 
-			//if (m_pFileFinderProc != NULL && !m_bStopSearch)
-			//	m_pFileFinderProc(this, FF_FOLDER, m_pCustomParam);
+            // skip RECYCLER
+            /*strCurFolder.MakeLower();*/
+            transform(strCurFolder.begin(), strCurFolder.end(), strCurFolder.begin(), ::tolower);
+            if (-1 != strCurFolder.find(_T("recycler")) || -1 != strCurFolder.find(_T("$recycle.bin"))) {
+                continue;
+            }
 
-			// skip RECYCLER
-			/*strCurFolder.MakeLower();*/
-			transform(strCurFolder.begin(), strCurFolder.end(), strCurFolder.begin(), ::tolower);
-			if (-1 != strCurFolder.find(_T("recycler")) || -1 != strCurFolder.find(_T("$recycle.bin")))
-			{
-				continue;
-			}
+            // skip system temp folder    //ä¸èƒ½è¿‡æ»¤æŽ‰ä¸´æ—¶ç›®å½•ï¼Œæœ‰äº›å·¥ä¸šè½¯ä»¶ä¼šé‡Šæ”¾æ–‡ä»¶åˆ°ä¸´æ—¶ç›®å½•è¿è¡Œ
+            if (-1 != strCurFolder.find(_T("winnt\\temp")) || -1 != strCurFolder.find(_T("windows\\temp"))) {
+                continue;
+            }
+            // skip user temp folder
+            if (-1 != strCurFolder.find(_T("local settings\\temp")) || -1 != strCurFolder.find(_T("local\\temp"))) {
+                continue;
+            }
 
-			// skip system temp folder    //²»ÄÜ¹ýÂËµôÁÙÊ±Ä¿Â¼£¬ÓÐÐ©¹¤ÒµÈí¼þ»áÊÍ·ÅÎÄ¼þµ½ÁÙÊ±Ä¿Â¼ÔËÐÐ
-			if (-1 != strCurFolder.find(_T("winnt\\temp")) || -1 != strCurFolder.find(_T("windows\\temp")))
-			{
-				continue;
-			}
-			// skip user temp folder
-			if (-1 != strCurFolder.find(_T("local settings\\temp")) || -1 != strCurFolder.find(_T("local\\temp")))
-			{
-				continue;
-			}
+            // skip volume folder
+            if (-1 != strCurFolder.find(_T("system volume information"))) {
+                continue;
+            }
 
-			// skip volume folder
-			if (-1 != strCurFolder.find(_T("system volume information")))
-			{
-				continue;
-			}
+            // Recursive call
+            GetFileListByFolder(wstrSubFolder);
+        } else {
+            wstring wstrFullFileName = wstrFolder + finder.name;
+            if (CheckIsPEFile(wstrFullFileName)) {
+                // èŽ·å–PEæ–‡ä»¶çš„è¯¦ç»†ä¿¡æ¯
+                wstring   wstrHashCode;
+                ULONGLONG FileSize;
+                ULONGLONG LastWriteTime;
+                CHAR      strVirusName[MAX_VIRUS_NAME_LEN] = {0};
+                GetFileInfoEx(wstrFullFileName, wstrHashCode, FileSize, LastWriteTime);
 
-			// Recursive call
-			GetFileListByFolder(wstrSubFolder);
-		}
-		else
-		{
-			wstring wstrFullFileName = wstrFolder + finder.name;
-			if (CheckIsPEFile(wstrFullFileName))
-			{
-				//»ñÈ¡PEÎÄ¼þµÄÏêÏ¸ÐÅÏ¢
-				wstring wstrHashCode;
-				ULONGLONG FileSize;
-				ULONGLONG LastWriteTime;
-				CHAR strVirusName[MAX_VIRUS_NAME_LEN] = {0};
-				GetFileInfoEx(wstrFullFileName, wstrHashCode, FileSize, LastWriteTime);
+                // ä¿å­˜åˆ°æ–‡ä»¶ä¸­
+                string strFileName = CStrUtil::ConvertW2A(wstrFullFileName) + "Hash:" + CStrUtil::ConvertW2A(wstrHashCode);
+                FileOperationHelper::SeWriteFile("FileScan.txt", strFileName, strFileName.size());
 
-				//±£´æµ½ÎÄ¼þÖÐ
-				string strFileName = CStrUtil::ConvertW2A(wstrFullFileName) + "Hash:" + CStrUtil::ConvertW2A(wstrHashCode);
-				FileOperationHelper::SeWriteFile("FileScan.txt", strFileName, strFileName.size());
+                if (!m_PeCacheHelper->PE_CACHE_Query_Cache(wstrFullFileName, FileSize, LastWriteTime, NULL, NULL, NULL)) {
+                    m_PeCacheHelper->PE_CACHE_insert(wstrFullFileName, FileSize, LastWriteTime, wstrHashCode);
+                }
 
-				if (!m_PeCacheHelper->PE_CACHE_Query_Cache(wstrFullFileName, FileSize, LastWriteTime, NULL, NULL, NULL))
-				{
-					m_PeCacheHelper->PE_CACHE_insert(wstrFullFileName, FileSize, LastWriteTime, wstrHashCode);
-				}
-				
-				//ÌØÕ÷¿âÒýÇæ¼ì²âÀÕË÷²¡¶¾
-				BOOL bVirus = CFeatureDB::GetInstance()->CheckRansomware(strVirusName, wstrFullFileName.c_str());
-				if (bVirus)
-				{
-					FileEAHelper::WriteFileExAttr(CStrUtil::ConvertW2A(wstrFullFileName), "Virus", "1");
-					WriteError(("*****************Virus Find Virus Path = {}"), CStrUtil::ConvertW2A(wstrFullFileName).c_str());
-				}
-			}
-		}
-		dwFileCount++;
-	} while (!_wfindnext(handle, &finder) && !m_bStopSearch);
+                // ç‰¹å¾åº“å¼•æ“Žæ£€æµ‹å‹’ç´¢ç—…æ¯’
+                BOOL bVirus = CFeatureDB::GetInstance()->CheckRansomware(strVirusName, wstrFullFileName.c_str());
+                if (bVirus) {
+                    FileEAHelper::WriteFileExAttr(CStrUtil::ConvertW2A(wstrFullFileName), "Virus", "1");
+                    WriteError(("*****************Virus Find Virus Path = {}"), CStrUtil::ConvertW2A(wstrFullFileName).c_str());
+                }
+            }
+        }
+        dwFileCount++;
+    } while (!_wfindnext(handle, &finder) && !m_bStopSearch);
 
-	_findclose(handle);
+    _findclose(handle);
 
-	return 0;
+    return 0;
 }
 
+BOOL CFileScanFun::CheckIsPEFile(const std::wstring wstrFilePath) {
+    BOOL   bIsPEFile   = FALSE;
+    HANDLE hFileHandle = nullptr;
+    BYTE   buffer[2];
+    DWORD  bytesRead;
 
-BOOL CFileScanFun::CheckIsPEFile(const std::wstring wstrFilePath)
-{
-	BOOL bIsPEFile = FALSE;
-	HANDLE hFileHandle = nullptr;
-	BYTE buffer[2];
-	DWORD bytesRead;
+    // èŽ·å–æ–‡ä»¶çš„å±žæ€§
+    DWORD fileAttributes = GetFileAttributes(wstrFilePath.c_str());
+    if (fileAttributes == INVALID_FILE_ATTRIBUTES || (fileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+        WriteError(("File not found or invalid"));
+        goto END;
+    }
+    // æ‰“å¼€æ–‡ä»¶
+    hFileHandle = CreateFile(wstrFilePath.c_str(), GENERIC_ALL, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFileHandle == INVALID_HANDLE_VALUE) {
+        WriteError(("Failed to open file  GetLasrError = {} filepath = {}"), GetLastError(), CStrUtil::ConvertW2A(wstrFilePath).c_str());
+        goto END;
+    }
 
-	// »ñÈ¡ÎÄ¼þµÄÊôÐÔ
-	DWORD fileAttributes = GetFileAttributes(wstrFilePath.c_str());
-	if (fileAttributes == INVALID_FILE_ATTRIBUTES || (fileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-	{
-		WriteError(("File not found or invalid"));
-		goto END;
-	}
-	// ´ò¿ªÎÄ¼þ
-	hFileHandle = CreateFile(wstrFilePath.c_str(), GENERIC_ALL, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hFileHandle == INVALID_HANDLE_VALUE)
-	{
-		WriteError(("Failed to open file  GetLasrError = {} filepath = {}"), GetLastError(), CStrUtil::ConvertW2A(wstrFilePath).c_str());
-		goto END;
-	}
+    // è¯»å–æ–‡ä»¶çš„å‰ä¸¤ä¸ªå­—èŠ‚
+    if (!ReadFile(hFileHandle, buffer, sizeof(buffer), &bytesRead, NULL) || bytesRead != sizeof(buffer)) {
+        WriteError(("Failed to ReadFile GetLasrError = {} filepath = {} "), GetLastError(), CStrUtil::ConvertW2A(wstrFilePath).c_str());
+        goto END;
+    }
 
-	// ¶ÁÈ¡ÎÄ¼þµÄÇ°Á½¸ö×Ö½Ú
-	if (!ReadFile(hFileHandle, buffer, sizeof(buffer), &bytesRead, NULL) || bytesRead != sizeof(buffer))
-	{
-		WriteError(("Failed to ReadFile GetLasrError = {} filepath = {} "), GetLastError(),CStrUtil::ConvertW2A(wstrFilePath).c_str());
-		goto END;
-	}
-
-	// ÅÐ¶ÏÊÇ·ñÎª PE ÎÄ¼þ
-	if (buffer[0] == 'M' && buffer[1] == 'Z')
-	{
-		bIsPEFile = TRUE;
-	}
+    // åˆ¤æ–­æ˜¯å¦ä¸º PE æ–‡ä»¶
+    if (buffer[0] == 'M' && buffer[1] == 'Z') {
+        bIsPEFile = TRUE;
+    }
 
 END:
-	// ¹Ø±ÕÎÄ¼þ¾ä±ú
-	if (hFileHandle)
-	{
-		CloseHandle(hFileHandle);
-	}
-	return bIsPEFile;
+    // å…³é—­æ–‡ä»¶å¥æŸ„
+    if (hFileHandle) {
+        CloseHandle(hFileHandle);
+    }
+    return bIsPEFile;
 }
 
+TCHAR* CFileScanFun::GetHashString(const unsigned char* pcSrc, DWORD dwSrcLen, TCHAR* pszDst, DWORD dwDstLen) {
+    if (dwSrcLen * 2 > dwDstLen) {
+        return NULL;
+    }
 
-TCHAR* CFileScanFun::GetHashString(const unsigned char* pcSrc, DWORD dwSrcLen, TCHAR* pszDst, DWORD dwDstLen)
-{
-	if (dwSrcLen * 2 > dwDstLen)
-	{
-		return NULL;
-	}
+    for (int i = 0; i < dwSrcLen; i++) {
+        swprintf_s(pszDst + 2 * i, dwDstLen - 2 * i, _T("%02X"), pcSrc[i]);
+    }
 
-	for (int i = 0; i < dwSrcLen; i++)
-	{
-		swprintf_s(pszDst + 2 * i, dwDstLen - 2 * i, _T("%02X"), pcSrc[i]);
-	}
-
-	return pszDst;
+    return pszDst;
 }
 
-BOOL CFileScanFun::GetFileInfoEx(const std::wstring wstrFullFileName, wstring& wstrHashCode, ULONGLONG& FileSize, ULONGLONG& LastWriteTime)
-{
-	unsigned char bHashCode[INTEGRITY_LENGTH] = { 0 };
-	TCHAR szFileHash[INTEGRITY_LENGTH * 2 + 1] = { 0 };
-	WIN32_FILE_ATTRIBUTE_DATA FileAttrData;
+BOOL CFileScanFun::GetFileInfoEx(const std::wstring wstrFullFileName, wstring& wstrHashCode, ULONGLONG& FileSize, ULONGLONG& LastWriteTime) {
+    unsigned char             bHashCode[INTEGRITY_LENGTH]          = {0};
+    TCHAR                     szFileHash[INTEGRITY_LENGTH * 2 + 1] = {0};
+    WIN32_FILE_ATTRIBUTE_DATA FileAttrData;
 
-	if (!m_pefilevalidate.GetPEFileDegistByLib(wstrFullFileName.c_str(), bHashCode))
-	{
-		return FALSE;
-	}
+    if (!m_pefilevalidate.GetPEFileDegistByLib(wstrFullFileName.c_str(), bHashCode)) {
+        return FALSE;
+    }
 
-	GetHashString(bHashCode, sizeof(bHashCode), szFileHash, sizeof(szFileHash) / sizeof(TCHAR));
-	if (!GetFileAttributesEx(wstrFullFileName.c_str(), GetFileExInfoStandard, &FileAttrData))
-	{
-		return FALSE;
-	}
+    GetHashString(bHashCode, sizeof(bHashCode), szFileHash, sizeof(szFileHash) / sizeof(TCHAR));
+    if (!GetFileAttributesEx(wstrFullFileName.c_str(), GetFileExInfoStandard, &FileAttrData)) {
+        return FALSE;
+    }
 
-	ULARGE_INTEGER size;
-	ULARGE_INTEGER WriteTime;
+    ULARGE_INTEGER size;
+    ULARGE_INTEGER WriteTime;
     size.HighPart = FileAttrData.nFileSizeHigh;
     size.LowPart  = FileAttrData.nFileSizeLow;
-	
-	WriteTime.HighPart = FileAttrData.ftLastWriteTime.dwHighDateTime;
-	WriteTime.LowPart = FileAttrData.ftLastWriteTime.dwLowDateTime;
 
-	FileSize = size.QuadPart;
-	LastWriteTime = WriteTime.QuadPart;
-	wstrHashCode = szFileHash;
+    WriteTime.HighPart = FileAttrData.ftLastWriteTime.dwHighDateTime;
+    WriteTime.LowPart  = FileAttrData.ftLastWriteTime.dwLowDateTime;
 
-	return TRUE;
+    FileSize      = size.QuadPart;
+    LastWriteTime = WriteTime.QuadPart;
+    wstrHashCode  = szFileHash;
+
+    return TRUE;
 }

@@ -9,17 +9,17 @@ LogHelper::~LogHelper()
 
 LogHelper::LogHelper()
 {
-	//mpmc_blocking_queue ´óĞ¡Îª1024£¬Ïß³Ì³ØÏß³ÌÊıÎª4
+	//mpmc_blocking_queue å¤§å°ä¸º1024ï¼Œçº¿ç¨‹æ± çº¿ç¨‹æ•°ä¸º4
 	spdlog::init_thread_pool(1024, 4);
 
 	std::vector<spdlog::sink_ptr> sinkList;
 
-	//´´½¨¹ö¶¯Sink£¬Ã¿¸öÎÄ¼ş´óĞ¡Îª10M£¬×î¶à±£Áô5¸öÎÄ¼ş
+	//åˆ›å»ºæ»šåŠ¨Sinkï¼Œæ¯ä¸ªæ–‡ä»¶å¤§å°ä¸º10Mï¼Œæœ€å¤šä¿ç•™5ä¸ªæ–‡ä»¶
 	auto basicSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>("../logs/Main.txt", 1024 * 1024 * 10, 5);
 	basicSink->set_level(spdlog::level::debug);
 	basicSink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%5l%$] [Thread:%t] %v");
 
-	//´´½¨²ÊÉ«ÖÕ¶ËÊä³ösink
+	//åˆ›å»ºå½©è‰²ç»ˆç«¯è¾“å‡ºsink
 	auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 	consoleSink->set_level(spdlog::level::debug);
 	consoleSink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%5l%$] [Thread:%t] %v");

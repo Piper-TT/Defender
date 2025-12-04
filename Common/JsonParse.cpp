@@ -16,7 +16,7 @@ JsonHelper::~JsonHelper()
         "CMDContent": 
 		[
             {
-                "LogContent": "µÇÂ½³É¹¦",
+                "LogContent": "ç™»é™†æˆåŠŸ",
                 "Time": "2021-10-01 16-00-00",
                 "UserName": "Admin",
                 "dwIsSuccess": 1
@@ -75,7 +75,7 @@ std::string JsonHelper::UserActionLog_GetJsonByVector(string ComputerID, WORD cm
 	person["CMDContent"] = root1;
 
 	root2.push_back(person);
-	sJsonPacket = root2.dump(); // 4 ±íÊ¾Ëõ½ø 4 ¸ö¿Õ¸ñ
+	sJsonPacket = root2.dump(); // 4 è¡¨ç¤ºç¼©è¿› 4 ä¸ªç©ºæ ¼
 	
 	auto j = json::parse(sJsonPacket);
 

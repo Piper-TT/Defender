@@ -36,8 +36,8 @@ private:
 						m_pool->m_conditional_lock.wait(lock);
 					}
 
-					//m_queueÃ»ÓÐÈÎÎñ·µ»ØÎªfalse
-					//ÐèÒªShutdownµÄÊ±ºò£¬ÐèÒª½«ËùÓÐÈÎÎñÈ¡³öÀ´£¬·ñÔò»áÒ»Ö±µÈ´ý
+					//m_queueæ²¡æœ‰ä»»åŠ¡è¿”å›žä¸ºfalse
+					//éœ€è¦Shutdownçš„æ—¶å€™ï¼Œéœ€è¦å°†æ‰€æœ‰ä»»åŠ¡å–å‡ºæ¥ï¼Œå¦åˆ™ä¼šä¸€ç›´ç­‰å¾…
 					dequeued = m_pool->m_queue.dequeue(func);
 				}
 				if (dequeued)

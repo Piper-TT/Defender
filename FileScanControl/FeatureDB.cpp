@@ -1,110 +1,93 @@
 #include "FeatureDB.h"
-#include <shlobj.h> // SHCreateDirectory
+#include <shlobj.h>  // SHCreateDirectory
 #include <filesystem>
 #include <FileOperationHelper.h>
 #include "sha256.h"
 #include "sha1.h"
 #include "sm3.h"
 #include "sm4.h"
-#include "SM4Crypto.h" 
+#include "SM4Crypto.h"
 #include "md5.h"
-namespace fs = boost::filesystem;  //Boostø‚
-// ¿’À˜≤°∂æÃÿ’˜ø‚µƒ√˚≥∆
-#define HASHSTORE_DB_NAME    "Feature.Lib"
+namespace fs = std::filesystem;  // BoostÂ∫ì
+// ÂãíÁ¥¢ÁóÖÊØíÁâπÂæÅÂ∫ìÁöÑÂêçÁß∞
+#define HASHSTORE_DB_NAME     "Feature.Lib"
 #define VIRUS_NAME_RANSOMWARE "Ransomware"
 
-// lmdb¥Û–°£®ƒ¨»œ20MB£©
+// lmdbÂ§ßÂ∞èÔºàÈªòËÆ§20MBÔºâ
 #define FEATURE_LIB_MAP_SIZE (1024 * 1024 * 20)
 
 CFeatureDB* CFeatureDB::m_pInst = NULL;
 
-int GetHashLengthByType(int nType)
-{
+int GetHashLengthByType(int nType) {
     int nLength = -1;
 
-    switch(nType)
-    {
-    case HASH_TYPE_MD5:
-        nLength = MD5_HASH_SIZE;
-        break;
-    case HASH_TYPE_SHA1:
-        nLength = SHA1_HASH_SIZE;
-        break;    
-    case HASH_TYPE_SHA2:
-        nLength = SHA256_HASH_SIZE;
-        break;
-    case HASH_TYPE_SM3:
-        nLength = SM3_HASH_SIZE;
-        break;
-    default:
-        break;
+    switch (nType) {
+        case HASH_TYPE_MD5:
+            nLength = MD5_HASH_SIZE;
+            break;
+        case HASH_TYPE_SHA1:
+            nLength = SHA1_HASH_SIZE;
+            break;
+        case HASH_TYPE_SHA2:
+            nLength = SHA256_HASH_SIZE;
+            break;
+        case HASH_TYPE_SM3:
+            nLength = SM3_HASH_SIZE;
+            break;
+        default:
+            break;
     }
 
     return nLength;
 }
 
-void Bin2Hex(const unsigned char *bin, int length, char *hex) 
-{
+void Bin2Hex(const unsigned char* bin, int length, char* hex) {
     const char hex_table[] = "0123456789ABCDEF";
-    int i;
+    int        i;
 
     for (i = 0; i < length; i++) {
-        hex[i * 2] = hex_table[(bin[i] >> 4) & 0x0F];
+        hex[i * 2]     = hex_table[(bin[i] >> 4) & 0x0F];
         hex[i * 2 + 1] = hex_table[bin[i] & 0x0F];
     }
     hex[length * 2] = '\0';
 }
 
-//hash÷µ◊™Œ™16Ω¯÷∆–Œ Ωµƒ◊÷∑˚¥Æ
-void HexToWStr(std::wstring& strHex, const unsigned char* pHex, unsigned int nLen)
-{
+// hashÂÄºËΩ¨‰∏∫16ËøõÂà∂ÂΩ¢ÂºèÁöÑÂ≠óÁ¨¶‰∏≤
+void HexToWStr(std::wstring& strHex, const unsigned char* pHex, unsigned int nLen) {
     strHex.clear();
-    if (!pHex || !nLen)
-    {
+    if (!pHex || !nLen) {
         return;
     }
 
-    TCHAR szFromat[3] = { 0 };
-    for (unsigned int i = 0; i < nLen; i++)
-    { 
+    TCHAR szFromat[3] = {0};
+    for (unsigned int i = 0; i < nLen; i++) {
         szFromat[2] = '\0';
         _sntprintf_s(szFromat, 2, _T("%02X"), pHex[i]);
         strHex += szFromat;
     }
 }
 
-CFeatureDB* CFeatureDB::GetInstance()
-{
+CFeatureDB* CFeatureDB::GetInstance() {
     static CFeatureDB m_pInst;
     return &m_pInst;
 }
 
-void CFeatureDB::Destroy()
-{
-    if (NULL !=  m_pInst)
-    {
+void CFeatureDB::Destroy() {
+    if (NULL != m_pInst) {
         delete m_pInst;
         m_pInst = NULL;
     }
 }
 
-CFeatureDB::CFeatureDB()
-: m_pEnv(NULL)
-, m_bInit(FALSE)
-{
+CFeatureDB::CFeatureDB() : m_pEnv(NULL), m_bInit(FALSE) {}
 
-}
-
-CFeatureDB::~CFeatureDB()
-{
+CFeatureDB::~CFeatureDB() {
     Uninit();
 }
 
-// ≥ı ºªØ
-BOOL CFeatureDB::Init()
-{
-    if (m_bInit)
-    {
+// ÂàùÂßãÂåñ
+BOOL CFeatureDB::Init() {
+    if (m_bInit) {
         return m_bInit;
     }
 
@@ -115,45 +98,37 @@ BOOL CFeatureDB::Init()
     return m_bInit;
 }
 
-// ∑¥≥ı ºªØ
-void CFeatureDB::Uninit()
-{
-    if (m_bInit 
-     && NULL != m_pEnv)
-    {
+// ÂèçÂàùÂßãÂåñ
+void CFeatureDB::Uninit() {
+    if (m_bInit && NULL != m_pEnv) {
         mdb_env_close(m_pEnv);
         m_pEnv = NULL;
     }
 }
 
-BOOL CFeatureDB::InitEnv()
-{
-    int  nRet = MDB_SUCCESS;
-    m_bInit = FALSE;
+BOOL CFeatureDB::InitEnv() {
+    int nRet = MDB_SUCCESS;
+    m_bInit  = FALSE;
 
-    do 
-    {
-        if (NULL != m_pEnv)
-        {
+    do {
+        if (NULL != m_pEnv) {
             return m_bInit;
         }
 
-        // ¥¥Ω®mdbπ§◊˜ª∑æ≥
+        // ÂàõÂª∫mdbÂ∑•‰ΩúÁéØÂ¢É
         nRet = mdb_env_create(&m_pEnv);
-        if (MDB_SUCCESS != nRet)
-        {
-            //WriteError(("Failed to create a env! Err->{}, {}"), nRet, mdb_strerror(nRet));
+        if (MDB_SUCCESS != nRet) {
+            // WriteError(("Failed to create a env! Err->{}, {}"), nRet, mdb_strerror(nRet));
             break;
         }
 
-        // …Ë÷√map¥Û–°£®Ã´–°ª·µº÷¬–¥»Î ß∞‹£©
-        nRet = mdb_env_set_mapsize(m_pEnv, FEATURE_LIB_MAP_SIZE); 
+        // ËÆæÁΩÆmapÂ§ßÂ∞èÔºàÂ§™Â∞è‰ºöÂØºËá¥ÂÜôÂÖ•Â§±Ë¥•Ôºâ
+        nRet = mdb_env_set_mapsize(m_pEnv, FEATURE_LIB_MAP_SIZE);
 
-        // ¥Úø™“ª∏ˆª∑æ≥£®◊¢“‚£¨◊Ó∫Û“ª∏ˆ≤Œ ˝mode£¨÷ª‘⁄Linuxœ¬”––ß£¨Windowsœ¬≤ªª·”√µΩ£©
-		nRet = mdb_env_open(m_pEnv, CStrUtil::StringToUTF8(m_strDBPath).c_str(), 0, 0660); 
-        if (MDB_SUCCESS != nRet)
-        {
-            //WriteError(("Failed to open a env! Err->{}, {}"), nRet, mdb_strerror(nRet));
+        // ÊâìÂºÄ‰∏Ä‰∏™ÁéØÂ¢ÉÔºàÊ≥®ÊÑèÔºåÊúÄÂêé‰∏Ä‰∏™ÂèÇÊï∞modeÔºåÂè™Âú®Linux‰∏ãÊúâÊïàÔºåWindows‰∏ã‰∏ç‰ºöÁî®Âà∞Ôºâ
+        nRet = mdb_env_open(m_pEnv, CStrUtil::StringToUTF8(m_strDBPath).c_str(), 0, 0660);
+        if (MDB_SUCCESS != nRet) {
+            // WriteError(("Failed to open a env! Err->{}, {}"), nRet, mdb_strerror(nRet));
             break;
         }
 
@@ -163,113 +138,90 @@ BOOL CFeatureDB::InitEnv()
     return m_bInit;
 }
 
-void CFeatureDB::InitDBPath()
-{
+void CFeatureDB::InitDBPath() {
     int nRet = ERROR_SUCCESS;
 
     std::wstring wstrPath = CWindowsHelper::GetRunDir();
-    if (!wstrPath.empty())
-    {
+    if (!wstrPath.empty()) {
         wstrPath += _T("\\") _T(HASHSTORE_DB_NAME);
     }
 
-	fs::path filePath(wstrPath);
+    fs::path filePath(wstrPath);
 
-	if (!fs::exists(filePath))
-	{
-		nRet = SHCreateDirectory(NULL, wstrPath.c_str());
-		if (nRet != 0)
-		{
-			//WriteError(("Failed({}) to create dir({})"), nRet, wstrPath.c_str());
-			return;
-		}
-	}
+    if (!fs::exists(filePath)) {
+        nRet = SHCreateDirectory(NULL, wstrPath.c_str());
+        if (nRet != 0) {
+            // WriteError(("Failed({}) to create dir({})"), nRet, wstrPath.c_str());
+            return;
+        }
+    }
 
     m_strDBPath = CStrUtil::ConvertW2A(wstrPath);
 }
 
-//º∆À„Œƒº˛µƒhash÷µ
-BOOL CFeatureDB::FetchFileHash(PUCHAR pHash, const int& nLength, const int& nType, const std::wstring& strFile)
-{
-    int    nCheckLength = 0;
-    BOOL   bRet         = FALSE;
-    HANDLE hFile        = INVALID_HANDLE_VALUE;
-    HANDLE hMapFile     = NULL;
-    PUCHAR pBuf         = NULL;
-    DWORD  dwRead       = 0;
-    LARGE_INTEGER filesize = { 0 };
+// ËÆ°ÁÆóÊñá‰ª∂ÁöÑhashÂÄº
+BOOL CFeatureDB::FetchFileHash(PUCHAR pHash, const int& nLength, const int& nType, const std::wstring& strFile) {
+    int           nCheckLength = 0;
+    BOOL          bRet         = FALSE;
+    HANDLE        hFile        = INVALID_HANDLE_VALUE;
+    HANDLE        hMapFile     = NULL;
+    PUCHAR        pBuf         = NULL;
+    DWORD         dwRead       = 0;
+    LARGE_INTEGER filesize     = {0};
 
-    do
-    {
-        // »Î≤Œ–£—È
-        if (NULL == pHash) 
-        {
+    do {
+        // ÂÖ•ÂèÇÊ†°È™å
+        if (NULL == pHash) {
             break;
         }
 
         nCheckLength = GetHashLengthByType(nType);
-        if (nCheckLength <= 0 || 
-            nCheckLength != nLength)
-        {
+        if (nCheckLength <= 0 || nCheckLength != nLength) {
             break;
         }
 
-        hFile = CreateFile(strFile.c_str(),
-                           GENERIC_READ,
-                           FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                           NULL,
-                           OPEN_EXISTING, 
-                           FILE_ATTRIBUTE_NORMAL,
-                           NULL);
-        if (INVALID_HANDLE_VALUE == hFile)
-        {
-            //WriteError(_T("Failed to open file! Err: 0x%08x"), GetLastError());
+        hFile = CreateFile(strFile.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL, NULL);
+        if (INVALID_HANDLE_VALUE == hFile) {
+            // WriteError(_T("Failed to open file! Err: 0x%08x"), GetLastError());
             break;
         }
 
         GetFileSizeEx(hFile, &filesize);
 
         hMapFile = CreateFileMapping(hFile, NULL, PAGE_READONLY, filesize.HighPart, filesize.LowPart, NULL);
-        if (NULL == hMapFile)
-        {
-            //WriteError(_T("Failed to create file map! Err: 0x%08x"), GetLastError());
+        if (NULL == hMapFile) {
+            // WriteError(_T("Failed to create file map! Err: 0x%08x"), GetLastError());
             break;
         }
 
         pBuf = (PUCHAR)MapViewOfFile(hMapFile, FILE_MAP_READ, 0, 0, filesize.QuadPart);
-        if (NULL == pBuf)
-        {
-            //WriteError(_T("Failed to map view of file!Err: 0x%08x"), GetLastError());
+        if (NULL == pBuf) {
+            // WriteError(_T("Failed to map view of file!Err: 0x%08x"), GetLastError());
             break;
         }
 
-		// »Áπ˚…®√Ë≤°∂æµƒ ±∫ÚU≈ÃÕª»ª±ª∞Œ≥ˆ£¨∫Û–¯µƒ…®√Ëπ˝≥Ã÷–£¨
-		// “ÚŒ™¥”“≥√ÊŒƒº˛“‘Õ‚µƒŒƒº˛ ”Õº∂¡»°ªÚ–¥»ÎŒƒº˛£¨ø…ƒ‹µº÷¬ª·µº÷¬ EXCEPTION_IN_PAGE_ERROR “Ï≥£
-		__try
-		{
-			// ≥¢ ‘∑√Œ  pBuf µƒ¥˙¬Î
-			CalcFileHash(pHash, nLength, nType, pBuf, filesize.QuadPart);
-		}
-		__except (GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR ? 
-			EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
-		{
-			// ¥¶¿Ì“Ï≥£µƒ¥˙¬Î
-			//WriteError(_T("UDisk is removed, GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR"));
-		}
-        
-		UnmapViewOfFile(pBuf);
+        // Â¶ÇÊûúÊâ´ÊèèÁóÖÊØíÁöÑÊó∂ÂÄôUÁõòÁ™ÅÁÑ∂Ë¢´ÊãîÂá∫ÔºåÂêéÁª≠ÁöÑÊâ´ÊèèËøáÁ®ã‰∏≠Ôºå
+        // Âõ†‰∏∫‰ªéÈ°µÈù¢Êñá‰ª∂‰ª•Â§ñÁöÑÊñá‰ª∂ËßÜÂõæËØªÂèñÊàñÂÜôÂÖ•Êñá‰ª∂ÔºåÂèØËÉΩÂØºËá¥‰ºöÂØºËá¥ EXCEPTION_IN_PAGE_ERROR ÂºÇÂ∏∏
+        __try {
+            // Â∞ùËØïËÆøÈóÆ pBuf ÁöÑ‰ª£Á†Å
+            CalcFileHash(pHash, nLength, nType, pBuf, filesize.QuadPart);
+        } __except (GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
+            // Â§ÑÁêÜÂºÇÂ∏∏ÁöÑ‰ª£Á†Å
+            // WriteError(_T("UDisk is removed, GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR"));
+        }
+
+        UnmapViewOfFile(pBuf);
 
         bRet = TRUE;
-    } while(false);
+    } while (false);
 
-    if (NULL != hMapFile)
-    {
+    if (NULL != hMapFile) {
         CloseHandle(hMapFile);
         hMapFile = NULL;
     }
 
-    if (INVALID_HANDLE_VALUE != hFile)
-    {
+    if (INVALID_HANDLE_VALUE != hFile) {
         CloseHandle(hFile);
         hFile = INVALID_HANDLE_VALUE;
     }
@@ -277,14 +229,11 @@ BOOL CFeatureDB::FetchFileHash(PUCHAR pHash, const int& nLength, const int& nTyp
     return bRet;
 }
 
-
-
-BOOL CFeatureDB::LoadDat(const std::wstring& strDatPath, std::wstring& strDatVersion)
-{
+BOOL CFeatureDB::LoadDat(const std::wstring& strDatPath, std::wstring& strDatVersion) {
     BOOL   bRet            = FALSE;
     HANDLE hFile           = INVALID_HANDLE_VALUE;
-    BYTE  *pBuffer         = NULL;
-    DWORD  dwBufSize       = 16 * 1024; // 16KB
+    BYTE*  pBuffer         = NULL;
+    DWORD  dwBufSize       = 16 * 1024;  // 16KB
     DWORD  dwRealRead      = 0;
     UINT   iReadCount      = 0;
     DWORD  dwBufRealSize   = 0;
@@ -294,169 +243,141 @@ BOOL CFeatureDB::LoadDat(const std::wstring& strDatPath, std::wstring& strDatVer
     UINT   i               = 0;
     UINT   iTotal          = 0;
     UINT   iDup            = 0;
-    
-    sm3_context *SM3Context                  = NULL;
-    UCHAR        SM3Hash[SM3_HASH_SIZE]      = { 0 };
-    UCHAR        SM3HashCheck[SM3_HASH_SIZE] = { 0 };
-    MDB_dbi      dbi                         = 0;
-    MDB_txn     *pTxn                        = NULL;
-    MDB_cursor  *pCursor                     = NULL;
-    VIRUS_INFO  *pVirusInfo                  = NULL;
-    VIRUS_INFO  *pVirusInfoOut               = NULL;
-    PHASHSTORE_HEADER pHeader                = NULL;
-    WCHAR        szDatVersion[32]            = { 0 };
 
-    do 
-    {
-        if (strDatPath.empty())
-        {
+    sm3_context*      SM3Context                  = NULL;
+    UCHAR             SM3Hash[SM3_HASH_SIZE]      = {0};
+    UCHAR             SM3HashCheck[SM3_HASH_SIZE] = {0};
+    MDB_dbi           dbi                         = 0;
+    MDB_txn*          pTxn                        = NULL;
+    MDB_cursor*       pCursor                     = NULL;
+    VIRUS_INFO*       pVirusInfo                  = NULL;
+    VIRUS_INFO*       pVirusInfoOut               = NULL;
+    PHASHSTORE_HEADER pHeader                     = NULL;
+    WCHAR             szDatVersion[32]            = {0};
+
+    do {
+        if (strDatPath.empty()) {
             break;
         }
 
-        // ¥Úø™Œƒº˛
-        hFile = CreateFile(strDatPath.c_str(), 
-            GENERIC_READ,
-            FILE_SHARE_READ,
-            NULL,
-            OPEN_EXISTING,
-            FILE_ATTRIBUTE_NORMAL,
-            NULL);
-        if (INVALID_HANDLE_VALUE == hFile)
-        {
-            //WriteError(_T("Failed to open file!(0x%08x)"), GetLastError());
+        // ÊâìÂºÄÊñá‰ª∂
+        hFile = CreateFile(strDatPath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (INVALID_HANDLE_VALUE == hFile) {
+            // WriteError(_T("Failed to open file!(0x%08x)"), GetLastError());
             break;
         }
 
-        // ∑÷≈‰ª∫¥Ê¥Û–°
+        // ÂàÜÈÖçÁºìÂ≠òÂ§ßÂ∞è
         pBuffer = new BYTE[dwBufSize];
-        if (NULL == pBuffer)
-        {
+        if (NULL == pBuffer) {
             break;
         }
 
-        // ∂¡»°Œƒº˛Õ∑
+        // ËØªÂèñÊñá‰ª∂Â§¥
         dwBufRealSize = min(dwBufSize, sizeof(HASHSTORE_HEADER));
-        bRet = ReadFile(hFile, pBuffer, dwBufRealSize, &dwRealRead, NULL);
-        if (!bRet)
-        {
-            //WriteError(_T("Failed to read file(0x%08x)"), GetLastError());
+        bRet          = ReadFile(hFile, pBuffer, dwBufRealSize, &dwRealRead, NULL);
+        if (!bRet) {
+            // WriteError(_T("Failed to read file(0x%08x)"), GetLastError());
             break;
         }
         bRet = FALSE;
 
-        // –£—ÈŒƒº˛magic
+        // Ê†°È™åÊñá‰ª∂magic
         pHeader = (PHASHSTORE_HEADER)pBuffer;
-        if (HASHSTORE_HEADER_TGA1 != pHeader->TGA_1
-         || HASHSTORE_HEADER_TGA2 != pHeader->TGA_2
-         || HASHSTORE_HEADER_TGA3 != pHeader->TGA_3)
-        {
-            //WriteError(_T("Invalid hashstore header!"));
+        if (HASHSTORE_HEADER_TGA1 != pHeader->TGA_1 || HASHSTORE_HEADER_TGA2 != pHeader->TGA_2 || HASHSTORE_HEADER_TGA3 != pHeader->TGA_3) {
+            // WriteError(_T("Invalid hashstore header!"));
             break;
         }
-        _stprintf_s(szDatVersion, 32, _T("%d.%d.%d.%d"),
-            pHeader->StoreVersion_1, pHeader->StoreVersion_2,
-            pHeader->StoreVersion_3, pHeader->StoreVersion_4);
+        _stprintf_s(szDatVersion, 32, _T("%d.%d.%d.%d"), pHeader->StoreVersion_1, pHeader->StoreVersion_2, pHeader->StoreVersion_3,
+                    pHeader->StoreVersion_4);
         strDatVersion = szDatVersion;
-        //WriteInfo(_T("Load HashStore Verison: %s"), szDatVersion);
+        // WriteInfo(_T("Load HashStore Verison: %s"), szDatVersion);
 
-        // ‘›¥Ê“ªœ¬Õ∑≤øµƒHASH÷µ£¨“ÚŒ™bufferª·±ª÷ÿ∏¥ π”√£¨ ˝æ›ª·±ª∏≤∏«
+        // ÊöÇÂ≠ò‰∏Ä‰∏ãÂ§¥ÈÉ®ÁöÑHASHÂÄºÔºåÂõ†‰∏∫buffer‰ºöË¢´ÈáçÂ§ç‰ΩøÁî®ÔºåÊï∞ÊçÆ‰ºöË¢´Ë¶ÜÁõñ
         memcpy(SM3HashCheck, pHeader->Sha1, SM3_HASH_SIZE);
 
-        // ≥ı ºªØSM3 content
+        // ÂàùÂßãÂåñSM3 content
         SM3Context = (sm3_context*)malloc(sizeof(sm3_context));
-        if (NULL == SM3Context)
-        {
-            //WriteError(_T("Failed to malloc sm3 context"));
+        if (NULL == SM3Context) {
+            // WriteError(_T("Failed to malloc sm3 context"));
             break;
         }
         sm3_starts(SM3Context);
 
-        // Œƒº˛Õ∑µƒ–£—È = Õ∑≤ø£®≤ª∫¨SHA1◊÷∂Œ£© + ƒ⁄»›
+        // Êñá‰ª∂Â§¥ÁöÑÊ†°È™å = Â§¥ÈÉ®Ôºà‰∏çÂê´SHA1Â≠óÊÆµÔºâ + ÂÜÖÂÆπ
         memset(pHeader->Sha1, 0, SM3_HASH_SIZE);
         sm3_update(SM3Context, (unsigned char*)pHeader, sizeof(HASHSTORE_HEADER));
 
-        // ◊º±∏item¡Ÿ ±ª∫¥Ê«¯
+        // ÂáÜÂ§áitem‰∏¥Êó∂ÁºìÂ≠òÂå∫
         pVirusInfoOut = (PVIRUS_INFO)malloc(dwVirusInfoSize);
-        if (NULL == pVirusInfoOut)
-        {
-            //WriteError(_T("Failed to allocate memory!"));
+        if (NULL == pVirusInfoOut) {
+            // WriteError(_T("Failed to allocate memory!"));
             break;
         }
 
-        // ∂¡»°itemœÓ£¨≤¢º∆À„sm3
+        // ËØªÂèñitemÈ°πÔºåÂπ∂ËÆ°ÁÆósm3
         iRet = mdb_txn_begin(m_pEnv, NULL, 0, &pTxn);
-        if (MDB_SUCCESS != iRet)
-        {
-            //WriteError(_T("Failed to mdb_txn_begin(err: %d)"), iRet);
-            break;
-        }
-       
-        // ¥Úø™mdb
-        iRet = mdb_dbi_open(pTxn, NULL, MDB_CREATE, &dbi);
-        if (MDB_SUCCESS != iRet)
-        {
-            //WriteError(_T("Failed to open a datebase(err: %d)"), iRet);
+        if (MDB_SUCCESS != iRet) {
+            // WriteError(_T("Failed to mdb_txn_begin(err: %d)"), iRet);
             break;
         }
 
-        // ¥Úø™cursor
+        // ÊâìÂºÄmdb
+        iRet = mdb_dbi_open(pTxn, NULL, MDB_CREATE, &dbi);
+        if (MDB_SUCCESS != iRet) {
+            // WriteError(_T("Failed to open a datebase(err: %d)"), iRet);
+            break;
+        }
+
+        // ÊâìÂºÄcursor
         iRet = mdb_cursor_open(pTxn, dbi, &pCursor);
-        if (MDB_SUCCESS != iRet)
-        {
-            //WriteError(_T("Failed to open a cursor(err-%d: %S)"), iRet, mdb_strerror(iRet));
+        if (MDB_SUCCESS != iRet) {
+            // WriteError(_T("Failed to open a cursor(err-%d: %S)"), iRet, mdb_strerror(iRet));
             break;
         }
 
         memset(pBuffer, 0, dwRealRead);
-        iReadCount = dwBufSize / dwVirusInfoSize;
+        iReadCount    = dwBufSize / dwVirusInfoSize;
         dwBufRealSize = iReadCount * dwVirusInfoSize;
-        while(ReadFile(hFile, pBuffer, dwBufRealSize, &dwRealRead, NULL))
-        {
-            if (0 == dwRealRead)
-            {
+        while (ReadFile(hFile, pBuffer, dwBufRealSize, &dwRealRead, NULL)) {
+            if (0 == dwRealRead) {
                 break;
             }
 
-            // ”–±‰ªØ ±≤≈–Ë“™∏¸–¬iReadCount
-            if (dwRealRead < dwBufRealSize)
-            {
+            // ÊúâÂèòÂåñÊó∂ÊâçÈúÄË¶ÅÊõ¥Êñ∞iReadCount
+            if (dwRealRead < dwBufRealSize) {
                 iReadCount = dwRealRead / dwVirusInfoSize;
             }
-            
-            // Ω´ ˝æ›¥Ê»Î ˝æ›ø‚÷–
-            for (UINT i = 0; i < iReadCount; ++i)
-            {
+
+            // Â∞ÜÊï∞ÊçÆÂ≠òÂÖ•Êï∞ÊçÆÂ∫ì‰∏≠
+            for (UINT i = 0; i < iReadCount; ++i) {
                 MDB_val key;
                 MDB_val value;
-                 
+
                 pVirusInfo = (PVIRUS_INFO)(pBuffer + i * dwVirusInfoSize);
 
-
-                //ransom_23.12.19.100.dat”…CSM4Cryptoº”√‹
-                // Ω‚√‹
+                // ransom_23.12.19.100.datÁî±CSM4CryptoÂä†ÂØÜ
+                //  Ëß£ÂØÜ
                 CSM4Crypto::GetInstance()->DecryptSector(pVirusInfo, pVirusInfoOut, dwUnitCount);
 
-                // ∏¯ key ∫Õ value ∏≥÷µ
-                key.mv_data = (void*)pVirusInfoOut->Hash; 
+                // Áªô key Âíå value ËµãÂÄº
+                key.mv_data = (void*)pVirusInfoOut->Hash;
                 key.mv_size = GetHashLengthByType(pVirusInfoOut->HashType);
 
                 value.mv_data = (void*)pVirusInfoOut;
                 value.mv_size = dwVirusInfoSize;
 
-                // ¥Ê»Îlmdb÷–
-                //iRet = mdb_put(pTxn, dbi, &key, &value, MDB_NOOVERWRITE);
+                // Â≠òÂÖ•lmdb‰∏≠
+                // iRet = mdb_put(pTxn, dbi, &key, &value, MDB_NOOVERWRITE);
                 iRet = mdb_cursor_put(pCursor, &key, &value, MDB_NOOVERWRITE);
-                if (iRet == MDB_KEYEXIST)
-                {
+                if (iRet == MDB_KEYEXIST) {
                     ++iDup;
-                }
-                else
-                {
+                } else {
                     std::wstring strVirusHash;
                     HexToWStr(strVirusHash, pVirusInfoOut->Hash, GetHashLengthByType(pVirusInfoOut->HashType));
                 }
 
-                // ∏¸–¬ –£—È÷µ
+                // Êõ¥Êñ∞ Ê†°È™åÂÄº
                 sm3_update(SM3Context, (unsigned char*)pVirusInfoOut, dwVirusInfoSize);
                 ++iTotal;
             }
@@ -464,64 +385,54 @@ BOOL CFeatureDB::LoadDat(const std::wstring& strDatPath, std::wstring& strDatVer
             memset(pBuffer, 0, dwRealRead);
             memset(pVirusInfoOut, 0, dwVirusInfoSize);
         }
-        
-		if (NULL != pCursor)
-		{
-			mdb_cursor_close(pCursor);
-			pCursor = NULL;
-		}
 
-        // ±»ΩœHash
-        sm3_finish(SM3Context, SM3Hash);
-        if (0 == memcmp(SM3Hash, SM3HashCheck, SM3_HASH_SIZE))
-        {
-            //commit“ª◊È ˝æ›ø‚≤Ÿ◊˜
-            iRet = mdb_txn_commit(pTxn);
-            if (MDB_SUCCESS == iRet)
-            {
-               bRet = TRUE;
-            }
+        if (NULL != pCursor) {
+            mdb_cursor_close(pCursor);
+            pCursor = NULL;
         }
-        else
-        {
-            // hash–£—ÈŒ¥Õ®π˝
-            //WriteInfo(_T("Hash isn't match, drop commit!"));
 
-            // ∑≈∆˙Ã·Ωª
+        // ÊØîËæÉHash
+        sm3_finish(SM3Context, SM3Hash);
+        if (0 == memcmp(SM3Hash, SM3HashCheck, SM3_HASH_SIZE)) {
+            // commit‰∏ÄÁªÑÊï∞ÊçÆÂ∫ìÊìç‰Ωú
+            iRet = mdb_txn_commit(pTxn);
+            if (MDB_SUCCESS == iRet) {
+                bRet = TRUE;
+            }
+        } else {
+            // hashÊ†°È™åÊú™ÈÄöËøá
+            // WriteInfo(_T("Hash isn't match, drop commit!"));
+
+            // ÊîæÂºÉÊèê‰∫§
             mdb_txn_abort(pTxn);
 
             iRet = MDB_SUCCESS;
         }
     } while (false);
 
-    if (INVALID_HANDLE_VALUE != hFile)
-    {
+    if (INVALID_HANDLE_VALUE != hFile) {
         CloseHandle(hFile);
         hFile = INVALID_HANDLE_VALUE;
     }
 
-    if (NULL != pBuffer)
-    {
-        delete []pBuffer;
+    if (NULL != pBuffer) {
+        delete[] pBuffer;
         pBuffer = NULL;
     }
 
-    if (NULL != SM3Context)
-    {
+    if (NULL != SM3Context) {
         free(SM3Context);
         SM3Context = NULL;
     }
 
-    if (NULL != pVirusInfoOut)
-    {
+    if (NULL != pVirusInfoOut) {
         free(pVirusInfoOut);
         pVirusInfoOut = NULL;
     }
-    
+
     mdb_close(m_pEnv, dbi);
 
-    if (NULL != pTxn && MDB_SUCCESS != iRet)
-    {
+    if (NULL != pTxn && MDB_SUCCESS != iRet) {
         mdb_txn_reset(pTxn);
         mdb_txn_abort(pTxn);
     }
@@ -530,173 +441,138 @@ BOOL CFeatureDB::LoadDat(const std::wstring& strDatPath, std::wstring& strDatVer
     return bRet;
 }
 
+bool CFeatureDB::ClearLMDB() {
+    int      iRet = 0;
+    MDB_txn* pTxn = NULL;
+    MDB_dbi  dbi  = 0;
 
-
-bool CFeatureDB::ClearLMDB()
-{
-    int         iRet    = 0;
-    MDB_txn    *pTxn    = NULL;    
-    MDB_dbi     dbi     = 0;
-
-    if(!m_bInit || NULL == m_pEnv)
-    {
+    if (!m_bInit || NULL == m_pEnv) {
         return false;
     }
 
     iRet = mdb_txn_begin(m_pEnv, NULL, MDB_RDONLY, &pTxn);
-    if (iRet != MDB_SUCCESS)
-    {
-        //WriteError(_T("Failed(%d) to begin a transcation!"), iRet);
+    if (iRet != MDB_SUCCESS) {
+        // WriteError(_T("Failed(%d) to begin a transcation!"), iRet);
         goto END;
     }
 
     iRet = mdb_dbi_open(pTxn, NULL, 0, &dbi);
-    if (MDB_SUCCESS != iRet)
-    {
-        //WriteError(_T("Failed(%d) to open a database!"), iRet);
+    if (MDB_SUCCESS != iRet) {
+        // WriteError(_T("Failed(%d) to open a database!"), iRet);
         goto END;
     }
 
     iRet = mdb_drop(pTxn, dbi, 0);
-    if (MDB_SUCCESS == iRet)
-    {
-        iRet = mdb_txn_commit(pTxn); // ≥…π¶£¨Ã·Ωª
-    }
-    else 
-    {
+    if (MDB_SUCCESS == iRet) {
+        iRet = mdb_txn_commit(pTxn);  // ÊàêÂäüÔºåÊèê‰∫§
+    } else {
         mdb_txn_abort(pTxn);
-        //WriteError(_T("Failed(%d) to drop a mdb_drop!"), iRet);
+        // WriteError(_T("Failed(%d) to drop a mdb_drop!"), iRet);
     }
 
     mdb_dbi_close(m_pEnv, dbi);
 
     return true;
 
-END: 
+END:
 
-    if (NULL != pTxn)
-    {
-        mdb_txn_abort(pTxn); //  ß∞‹£¨≥∑œ˙ ¬ŒÒ
+    if (NULL != pTxn) {
+        mdb_txn_abort(pTxn);  // Â§±Ë¥•ÔºåÊí§ÈîÄ‰∫ãÂä°
     }
 
-    if(0 != dbi)
-    {
+    if (0 != dbi) {
         mdb_dbi_close(m_pEnv, dbi);
-    }   
+    }
 
     return false;
 }
 
-
-// ÷∏∂®ƒø¬ºªÚæﬂÃÂdatŒƒº˛Ω¯––∂¡»°
-BOOL CFeatureDB::Load(const std::wstring& strHashstoreDir, const std::wstring &strSuffix /*= _T(".dat")*/)
-{
-    std::wstring xstrSuffix;
-    std::wstring strPath;
-    std::wstring strVersion;
+// ÊåáÂÆöÁõÆÂΩïÊàñÂÖ∑‰ΩìdatÊñá‰ª∂ËøõË°åËØªÂèñ
+BOOL CFeatureDB::Load(const std::wstring& strHashstoreDir, const std::wstring& strSuffix /*= _T(".dat")*/) {
+    std::wstring            xstrSuffix;
+    std::wstring            strPath;
+    std::wstring            strVersion;
     std::list<std::wstring> lstVers;
-    BOOL         bRet    = FALSE;
-    DWORD        dwAttrs = 0;
+    BOOL                    bRet    = FALSE;
+    DWORD                   dwAttrs = 0;
 
-    do 
-    {
-        // »Î≤Œ–£—È
-        if (strHashstoreDir.empty())
-        {
+    do {
+        // ÂÖ•ÂèÇÊ†°È™å
+        if (strHashstoreDir.empty()) {
             strPath = CWindowsHelper::GetRunDir();
             strPath += _T("\\") RANSOM_DIR;
-        }
-        else
-        {
+        } else {
             strPath = strHashstoreDir;
         }
 
-        // ◊º±∏–Ë“™∂¡»°µƒŒƒº˛∫Û◊∫
-        if (strSuffix.empty())
-        {
+        // ÂáÜÂ§áÈúÄË¶ÅËØªÂèñÁöÑÊñá‰ª∂ÂêéÁºÄ
+        if (strSuffix.empty()) {
             xstrSuffix = _T(".dat");
-        }
-        else
-        {
+        } else {
             xstrSuffix = strSuffix;
         }
 
-        // ªÒ»°¿‡–Õ
+        // Ëé∑ÂèñÁ±ªÂûã
         dwAttrs = GetFileAttributes(strPath.c_str());
-        if (INVALID_FILE_ATTRIBUTES == dwAttrs)
-        {
-            //WriteError(("'{}' isn't found!"), strPath.c_str());
+        if (INVALID_FILE_ATTRIBUTES == dwAttrs) {
+            // WriteError(("'{}' isn't found!"), strPath.c_str());
             break;
         }
-        
-        if (FILE_ATTRIBUTE_DIRECTORY == 
-            (FILE_ATTRIBUTE_DIRECTORY & dwAttrs))
-        {
-            std::list<std::wstring> lstFiles;
+
+        if (FILE_ATTRIBUTE_DIRECTORY == (FILE_ATTRIBUTE_DIRECTORY & dwAttrs)) {
+            std::list<std::wstring>           lstFiles;
             std::list<std::wstring>::iterator it;
-            int iSucc = 0;
-            
-            // ∞¥’’÷∏∂®¿‡–Õ±È¿˙ƒø¬º
+            int                               iSucc = 0;
+
+            // ÊåâÁÖßÊåáÂÆöÁ±ªÂûãÈÅçÂéÜÁõÆÂΩï
             bRet = FileOperationHelper::FetchXFromDir(lstFiles, strPath, xstrSuffix);
-            if (!bRet)
-            {
-               // WriteError(("Failed to fetch file from dir({})!"), strPath.c_str());
+            if (!bRet) {
+                // WriteError(("Failed to fetch file from dir({})!"), strPath.c_str());
                 break;
             }
 
-            // ≈–∂œª∑æ≥ «∑Ò“—æ≠◊º±∏∫√
-            if (!m_bInit && (!Init()))
-            {
-                //WriteError(("Failed to init env"));
+            // Âà§Êñ≠ÁéØÂ¢ÉÊòØÂê¶Â∑≤ÁªèÂáÜÂ§áÂ•Ω
+            if (!m_bInit && (!Init())) {
+                // WriteError(("Failed to init env"));
                 break;
             }
 
             bRet = ClearLMDB();
-            if (!bRet)
-            {
-                //WriteError(("Failed to ClearMdb"));
+            if (!bRet) {
+                // WriteError(("Failed to ClearMdb"));
                 break;
             }
 
-            for(it = lstFiles.begin(); it != lstFiles.end(); ++it)
-            {
+            for (it = lstFiles.begin(); it != lstFiles.end(); ++it) {
                 strVersion.clear();
                 bRet = LoadDat(*it, strVersion);
-                if (!bRet)
-                {
-                    //WriteWarn(("Failed to load '{}'! Ignore!!!"),(*it).c_str());
-                }
-                else
-                {
+                if (!bRet) {
+                    // WriteWarn(("Failed to load '{}'! Ignore!!!"),(*it).c_str());
+                } else {
                     ++iSucc;
                     lstVers.push_back(strVersion);
                 }
             }
 
-            bRet = !(iSucc == 0 && !lstFiles.empty()); 
-        }
-        else
-        {
-            if (xstrSuffix.length() > strPath.length())
-            {
-                //WriteError(("Invalid file path(Path len:{} - Suffix len:{})"),strPath.length(), xstrSuffix.length());
+            bRet = !(iSucc == 0 && !lstFiles.empty());
+        } else {
+            if (xstrSuffix.length() > strPath.length()) {
+                // WriteError(("Invalid file path(Path len:{} - Suffix len:{})"),strPath.length(), xstrSuffix.length());
                 break;
             }
 
-            // ªÒ»°Œƒº˛µƒ∫Û◊∫
+            // Ëé∑ÂèñÊñá‰ª∂ÁöÑÂêéÁºÄ
             std::wstring strSuff;
             strSuff = strPath.substr(strPath.length() - xstrSuffix.length());
 
-            if (0 != _tcsicmp(strSuff.c_str(), xstrSuffix.c_str()))
-            {
-                //WriteError(("Invalid file! Need '{}', given '{}'"),  xstrSuffix.c_str(), strSuff.c_str());
+            if (0 != _tcsicmp(strSuff.c_str(), xstrSuffix.c_str())) {
+                // WriteError(("Invalid file! Need '{}', given '{}'"),  xstrSuffix.c_str(), strSuff.c_str());
                 break;
             }
 
-            // ≈–∂œª∑æ≥ «∑Ò“—æ≠◊º±∏∫√
-            if (!m_bInit && (!Init()))
-            {
-                //WriteError(("Failed to init env"));
+            // Âà§Êñ≠ÁéØÂ¢ÉÊòØÂê¶Â∑≤ÁªèÂáÜÂ§áÂ•Ω
+            if (!m_bInit && (!Init())) {
+                // WriteError(("Failed to init env"));
                 break;
             }
 
@@ -709,207 +585,170 @@ BOOL CFeatureDB::Load(const std::wstring& strHashstoreDir, const std::wstring &s
     return bRet;
 }
 
-BOOL CFeatureDB::CheckRansomware(string strVirusName, wstring wstrFileName, int nType)
-{
-    BOOL   bRet    = FALSE;
-    BOOL   bExist  = FALSE;
-    PUCHAR pHash   = NULL;
-    CHAR   hexHash[80] = { 0 };
-    int    nLength = 0;
+BOOL CFeatureDB::CheckRansomware(string strVirusName, wstring wstrFileName, int nType) {
+    BOOL   bRet        = FALSE;
+    BOOL   bExist      = FALSE;
+    PUCHAR pHash       = NULL;
+    CHAR   hexHash[80] = {0};
+    int    nLength     = 0;
 
-	if (wstrFileName.empty())
-	{
-		return FALSE;
-	}
+    if (wstrFileName.empty()) {
+        return FALSE;
+    }
 
-    do 
-    {
-        // –£—ÈŒƒº˛
-        if (wstrFileName.empty())
-        {
+    do {
+        // Ê†°È™åÊñá‰ª∂
+        if (wstrFileName.empty()) {
             // WriteWarn(_T("No file given!"));
             return bRet;
         }
 
-        // –£—È¿‡–Õ£®≤ª∑˚∫œ‘Ú π”√ƒ¨»œµƒMD5£©
-        if (nType < HASH_TYPE_SHA1 
-         || nType > HASH_TYPE_SM3)
-        {
+        // Ê†°È™åÁ±ªÂûãÔºà‰∏çÁ¨¶ÂêàÂàô‰ΩøÁî®ÈªòËÆ§ÁöÑMD5Ôºâ
+        if (nType < HASH_TYPE_SHA1 || nType > HASH_TYPE_SM3) {
             nType = HASH_TYPE_MD5;
         }
 
-        // ∏˘æ›¿‡–Õº∆À„÷∏∂®Œƒº˛µƒHASH÷µ
+        // Ê†πÊçÆÁ±ªÂûãËÆ°ÁÆóÊåáÂÆöÊñá‰ª∂ÁöÑHASHÂÄº
         nLength = GetHashLengthByType(nType);
-        if (nLength <= 0)
-        {
-            //WriteWarn(_T("Failed to fetch hash length by type"));
+        if (nLength <= 0) {
+            // WriteWarn(_T("Failed to fetch hash length by type"));
             break;
         }
 
         pHash = new UCHAR[nLength];
-        if (NULL == pHash)
-        {
-            //WriteError(_T("Failed to allocate memory!"));
+        if (NULL == pHash) {
+            // WriteError(_T("Failed to allocate memory!"));
             break;
         }
 
-        // µ˜”√Ω”ø⁄º∆À„Œƒº˛Hash÷µ
+        // Ë∞ÉÁî®Êé•Âè£ËÆ°ÁÆóÊñá‰ª∂HashÂÄº
         bRet = FetchFileHash(pHash, nLength, nType, wstrFileName);
-        if (!bRet)
-        {
-            //WriteError(_T("Failed to fetch file hash!'%s'"),strFile.c_str());
+        if (!bRet) {
+            // WriteError(_T("Failed to fetch file hash!'%s'"),strFile.c_str());
             break;
         }
         Bin2Hex(pHash, nLength, hexHash);
-        //WriteDebug(_T("Get '%s' hash(%d): '%S'"), strFile.c_str(), nType, hexHash);
+        // WriteDebug(_T("Get '%s' hash(%d): '%S'"), strFile.c_str(), nType, hexHash);
 
-        // ≤È’“Hash
-		{
-			std::unique_lock<std::mutex> lock(m_Mutex);
-			bRet = IsHashExist(pHash, nLength, bExist, strVirusName);
-		}
-		if (!bRet)
-		{
-			//WriteDebug(_T("Process is not virus by HashStore. Path = %s, hash(%d): '%S'."), strFile.c_str(), nType, hexHash);
-			break;
-		}
-		
-		if (bExist)
-		{
-			//WriteWarn(_T("Process is virus by HashStore. Path = %s, hash(%d): '%S'."), strFile.c_str(), nType, hexHash);
-		}
+        // Êü•ÊâæHash
+        {
+            std::unique_lock<std::mutex> lock(m_Mutex);
+            bRet = IsHashExist(pHash, nLength, bExist, strVirusName);
+        }
+        if (!bRet) {
+            // WriteDebug(_T("Process is not virus by HashStore. Path = %s, hash(%d): '%S'."), strFile.c_str(), nType, hexHash);
+            break;
+        }
+
+        if (bExist) {
+            // WriteWarn(_T("Process is virus by HashStore. Path = %s, hash(%d): '%S'."), strFile.c_str(), nType, hexHash);
+        }
 
         bRet = bExist;
     } while (false);
 
-    if (NULL != pHash)
-    {
-        delete []pHash;
+    if (NULL != pHash) {
+        delete[] pHash;
         pHash = NULL;
     }
 
     return bRet;
 }
 
-
-void CFeatureDB::CalcFileHash(PUCHAR pHash, int nLength, int nType, PBYTE pBuf, const DWORD & size)
-{
-    switch (nType)
-    {
-    case HASH_TYPE_SHA1:
-        {
+void CFeatureDB::CalcFileHash(PUCHAR pHash, int nLength, int nType, PBYTE pBuf, const DWORD& size) {
+    switch (nType) {
+        case HASH_TYPE_SHA1: {
             sha1_context ctx;
             sha1_starts(&ctx);
             sha1_update(&ctx, pBuf, size);
             sha1_finish(&ctx, pHash);
-        }
-        break;
-    case HASH_TYPE_SHA2:
-        {
+        } break;
+        case HASH_TYPE_SHA2: {
             sha256_context ctx;
             sha256_starts(&ctx, 0);
             sha256_update(&ctx, pBuf, size);
             sha256_finish(&ctx, pHash);
-        }
-        break;
-    case HASH_TYPE_SM3:
-        {
+        } break;
+        case HASH_TYPE_SM3: {
             sm3_context ctx;
             sm3_starts(&ctx);
             sm3_update(&ctx, pBuf, size);
             sm3_finish(&ctx, pHash);
-        }
-        break;
-    case HASH_TYPE_MD5:
-    default:
-        {
+        } break;
+        case HASH_TYPE_MD5:
+        default: {
             MD5_CTX_EX ctx;
             MD5Init(&ctx);
             MD5Update(&ctx, pBuf, size);
             MD5Final(&ctx, pHash);
-        }
-        break;
+        } break;
     }
 }
 
-BOOL CFeatureDB::IsHashExist(UCHAR* pHash, int nLength, BOOL& bExist, string strVirusName)
-{
+BOOL CFeatureDB::IsHashExist(UCHAR* pHash, int nLength, BOOL& bExist, string strVirusName) {
     BOOL bRet = FALSE;
 
-    if (NULL == pHash || nLength < MD5_HASH_SIZE)
-    {
+    if (NULL == pHash || nLength < MD5_HASH_SIZE) {
         return bRet;
     }
 
-    // ºÏ≤È «∑Ò≥ı ºªØ
-    if (!m_bInit && !Init())
-    {
+    // Ê£ÄÊü•ÊòØÂê¶ÂàùÂßãÂåñ
+    if (!m_bInit && !Init()) {
         return bRet;
     }
 
     int         iRet    = 0;
-    MDB_txn    *pTxn    = NULL;
-    MDB_cursor *pCursor = NULL;
+    MDB_txn*    pTxn    = NULL;
+    MDB_cursor* pCursor = NULL;
     MDB_dbi     dbi     = 0;
-    
-    do 
-    {
+
+    do {
         iRet = mdb_txn_begin(m_pEnv, NULL, MDB_RDONLY, &pTxn);
-        if (iRet != MDB_SUCCESS)
-        {
-            //WriteError(_T("Failed(%d) to begin a transcation!"), iRet);
+        if (iRet != MDB_SUCCESS) {
+            // WriteError(_T("Failed(%d) to begin a transcation!"), iRet);
             break;
         }
-        
+
         iRet = mdb_dbi_open(pTxn, NULL, 0, &dbi);
-        if (MDB_SUCCESS != iRet)
-        {
-            //WriteError(_T("Failed(%d) to open a database!"), iRet);
+        if (MDB_SUCCESS != iRet) {
+            // WriteError(_T("Failed(%d) to open a database!"), iRet);
             break;
         }
-   
+
         std::wstring strVirusHash;
         HexToWStr(strVirusHash, pHash, nLength);
 
-        // ≤È—Ø
+        // Êü•ËØ¢
         MDB_val key;
         MDB_val value;
         key.mv_data = (void*)pHash;
         key.mv_size = nLength;
-        //iRet = mdb_cursor_get(pCursor, &key, &value, MDB_FIRST);
+        // iRet = mdb_cursor_get(pCursor, &key, &value, MDB_FIRST);
         iRet = mdb_get(pTxn, dbi, &key, &value);
-        if (iRet != MDB_SUCCESS)
-        {
+        if (iRet != MDB_SUCCESS) {
             bExist = FALSE;
-            if (iRet == MDB_NOTFOUND)
-            {
+            if (iRet == MDB_NOTFOUND) {
                 bRet = TRUE;
             }
-        }
-        else
-        {
-            bRet = TRUE;
+        } else {
+            bRet   = TRUE;
             bExist = TRUE;
 
             PVIRUS_INFO pVirusInfo = (PVIRUS_INFO)value.mv_data;
-            if (strlen(pVirusInfo->VirusName) == 0)
-            {
+            if (strlen(pVirusInfo->VirusName) == 0) {
                 strVirusName = VIRUS_NAME_RANSOMWARE;
+            } else {
+                strVirusName = pVirusInfo->VirusName;
             }
-            else
-            {
-				strVirusName = pVirusInfo->VirusName;
-            }
-            //WriteInfo(_T("Get virus name: '%S'"), strVirusName.c_str());
+            // WriteInfo(_T("Get virus name: '%S'"), strVirusName.c_str());
         }
 
     } while (false);
 
     mdb_dbi_close(m_pEnv, dbi);
 
-    // πÿ±’Transcation
-    if (NULL != pTxn)
-    {
+    // ÂÖ≥Èó≠Transcation
+    if (NULL != pTxn) {
         mdb_txn_reset(pTxn);
         mdb_txn_abort(pTxn);
     }

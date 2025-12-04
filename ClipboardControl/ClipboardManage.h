@@ -45,15 +45,15 @@ static const VDClipboardFormat clipboard_formats[] = {
     {CF_HDROP, {VD_AGENT_CLIPBOARD_FILE_LIST, 0}},
 };
 
-// ��鳣�ø�ʽ
+// 检查常用格式
 const UINT Formats[] = {
-	CF_UNICODETEXT,  // Unicode�ı�
-	CF_TEXT,         // ANSI�ı�
-	CF_DIB,         // λͼ
-	CF_BITMAP,      // λͼ���
-	CF_HDROP,       // �ļ�
-	CF_ENHMETAFILE, // ��ǿ��ͼԪ�ļ�
-	CF_METAFILEPICT // ͼԪ�ļ�
+	CF_UNICODETEXT,  // Unicode文本
+	CF_TEXT,         // ANSI文本
+	CF_DIB,         // 位图
+	CF_BITMAP,      // 位图句柄
+	CF_HDROP,       // 文件
+	CF_ENHMETAFILE, // 增强型图元文件
+	CF_METAFILEPICT // 图元文件
 };
 
 class ClipboardManage : public Singleton<ClipboardManage>

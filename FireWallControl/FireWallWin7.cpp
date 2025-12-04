@@ -34,16 +34,16 @@ BOOL CFireWallWin7::InitCom()
 		}
 	}
 
-	// ´ò¿ªWFPÒýÇæ
+	// æ‰“å¼€WFPå¼•æ“Ž
 	FWPM_SESSION session = { 0 };
 	session.flags = FWPM_SESSION_FLAG_DYNAMIC;
 
 	DWORD status = FwpmEngineOpen0(
-		NULL,                   // ±¾µØ»úÆ÷
-		RPC_C_AUTHN_WINNT,     // ÈÏÖ¤·þÎñ
-		NULL,                   // °²È«ÉÏÏÂÎÄ
-		&session,              // »á»°ÐÅÏ¢
-		&m_hEngine            // ÒýÇæ¾ä±ú
+		NULL,                   // æœ¬åœ°æœºå™¨
+		RPC_C_AUTHN_WINNT,     // è®¤è¯æœåŠ¡
+		NULL,                   // å®‰å…¨ä¸Šä¸‹æ–‡
+		&session,              // ä¼šè¯ä¿¡æ¯
+		&m_hEngine            // å¼•æ“Žå¥æŸ„
 	);
 
 	return TRUE;
@@ -68,7 +68,7 @@ BOOL CFireWallWin7::getFirewallPly(DWORD* dwFirewall)
 	DWORD dwCurrentState = 0;
 	DWORD dwStartType = 0;
 
-	//¼ì²â·À»ðÇ½·þÎñ×´Ì¬
+	//æ£€æµ‹é˜²ç«å¢™æœåŠ¡çŠ¶æ€
 	if (!QueryFwService(dwCurrentState, dwStartType))
 	{
 		goto Cleanup;
@@ -87,7 +87,7 @@ BOOL CFireWallWin7::getFirewallPly(DWORD* dwFirewall)
 		goto Cleanup;
 	}
 
-	//ÓòÍø
+	//åŸŸç½‘
 	if (SUCCEEDED(pNetFwPolicy2->get_FirewallEnabled(NET_FW_PROFILE2_DOMAIN, &bIsEnabled)))
 	{
 		if (VARIANT_TRUE == bIsEnabled)
@@ -101,7 +101,7 @@ BOOL CFireWallWin7::getFirewallPly(DWORD* dwFirewall)
 		goto Cleanup;
 	}
 
-	//Ë½Íø
+	//ç§ç½‘
 	if (SUCCEEDED(pNetFwPolicy2->get_FirewallEnabled(NET_FW_PROFILE2_PRIVATE, &bIsEnabled)))
 	{
 		if (VARIANT_TRUE == bIsEnabled)
@@ -115,7 +115,7 @@ BOOL CFireWallWin7::getFirewallPly(DWORD* dwFirewall)
 		goto Cleanup;
 	}
 
-	//¹«Íø
+	//å…¬ç½‘
 	if (SUCCEEDED(pNetFwPolicy2->get_FirewallEnabled(NET_FW_PROFILE2_PUBLIC, &bIsEnabled)))
 	{
 		if (VARIANT_TRUE == bIsEnabled)
@@ -183,11 +183,11 @@ BOOL CFireWallWin7::StartMonitoring()
 	if (!m_hEngine)
 		return FALSE;
 
-	// ´´½¨ÊÂ¼þ¹ýÂËÆ÷
+	// åˆ›å»ºäº‹ä»¶è¿‡æ»¤å™¨
 	FWPM_NET_EVENT_ENUM_TEMPLATE0 enumTemplate = { 0 };
-	enumTemplate.numFilterConditions = 0;  // ²»Ê¹ÓÃ¹ýÂËÌõ¼þ£¬¼à¿ØËùÓÐÊÂ¼þ
+	enumTemplate.numFilterConditions = 0;  // ä¸ä½¿ç”¨è¿‡æ»¤æ¡ä»¶ï¼Œç›‘æŽ§æ‰€æœ‰äº‹ä»¶
 
-	// ¶©ÔÄÁ¬½ÓÊÂ¼þ
+	// è®¢é˜…è¿žæŽ¥äº‹ä»¶
 	FWPM_NET_EVENT_SUBSCRIPTION0 subscription = { 0 };
 	subscription.enumTemplate = &enumTemplate;
 
@@ -195,16 +195,16 @@ BOOL CFireWallWin7::StartMonitoring()
 	DWORD status = FwpmNetEventSubscribe0(
 		m_hEngine,
 		&subscription,
-		OnNetworkEvent,        // »Øµ÷º¯Êý
-		this,                  // ÉÏÏÂÎÄ
+		OnNetworkEvent,        // å›žè°ƒå‡½æ•°
+		this,                  // ä¸Šä¸‹æ–‡
 		&hSubscription
 	);
 
-	// Ìí¼ÓWFP¹ýÂËÆ÷À´²¶»ñÁ¬½Ó
+	// æ·»åŠ WFPè¿‡æ»¤å™¨æ¥æ•èŽ·è¿žæŽ¥
 	FWPM_FILTER0 filter = { 0 };
 	FWPM_FILTER_CONDITION0 condition[1] = { 0 };
 
-	// Éú³É¹ýÂËÆ÷GUID
+	// ç”Ÿæˆè¿‡æ»¤å™¨GUID
 	status = UuidCreate(&filter.filterKey);
 	if (status != RPC_S_OK)
 	{
@@ -212,15 +212,15 @@ BOOL CFireWallWin7::StartMonitoring()
 		return FALSE;
 	}
 
-	// ÉèÖÃ¹ýÂËÆ÷²ÎÊý
+	// è®¾ç½®è¿‡æ»¤å™¨å‚æ•°
 	filter.displayData.name = (wchar_t*)L"Connection Monitor Filter";
 	filter.displayData.description = (wchar_t*)L"Monitors all connections";
 
-	// ÉèÖÃ²ã
-	filter.layerKey = FWPM_LAYER_INBOUND_TRANSPORT_V4_GUID;  // ¼à¿ØIPv4Á¬½Ó
-	filter.action.type = FWP_ACTION_PERMIT;  // ÔÊÐíÁ¬½Ó²¢¼ÇÂ¼
+	// è®¾ç½®å±‚
+	filter.layerKey = FWPM_LAYER_INBOUND_TRANSPORT_V4_GUID;  // ç›‘æŽ§IPv4è¿žæŽ¥
+	filter.action.type = FWP_ACTION_PERMIT;  // å…è®¸è¿žæŽ¥å¹¶è®°å½•
 
-	// Ìí¼Ó¹ýÂËÆ÷
+	// æ·»åŠ è¿‡æ»¤å™¨
 	status = FwpmFilterAdd0(
 		m_hEngine,
 		&filter,
@@ -233,7 +233,7 @@ BOOL CFireWallWin7::StartMonitoring()
 		return FALSE;
 	}
 
-	printf("³É¹¦Ìí¼ÓWFP¹ýÂËÆ÷\n");
+	printf("æˆåŠŸæ·»åŠ WFPè¿‡æ»¤å™¨\n");
 	return TRUE;
 
 	return (status == ERROR_SUCCESS);
@@ -251,7 +251,7 @@ void CFireWallWin7::HandleNetworkEvent(const FWPM_NET_EVENT1* event)
 	if (!event)
 		return;
 
-	// ¼ÇÂ¼Á¬½ÓÐÅÏ¢
+	// è®°å½•è¿žæŽ¥ä¿¡æ¯
 	switch (event->type)
 	{
 	case FWPM_NET_EVENT_TYPE_IKEEXT_MM_FAILURE:

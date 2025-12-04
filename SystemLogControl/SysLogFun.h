@@ -4,21 +4,22 @@
 #include <MsXml2.h>
 #include <winevt.h>
 #include <msxml6.h>
+#include "LogHelper.h"
 #include <map>
 #import"C:\Windows\System32\msxml6.dll"
 
 #define MAX_ITEMVALUE_SIZE (100)
 #define MAX_DESCRIPTION_SIZE 1024 * 6
 
-//WINXP����ϵͳ��ע�����ϵͳ�¼��ص�
+//WINXP以上系统，注册操作系统事件回调
 typedef HANDLE(WINAPI* PEVTSUBSCRIBE) (EVT_HANDLE, HANDLE, LPCWSTR, LPCWSTR, EVT_HANDLE, PVOID, EVT_SUBSCRIBE_CALLBACK, DWORD);
-//WINXP����ϵͳ����ȡ����ϵͳ�¼�
+//WINXP以上系统，读取操作系统事件
 typedef HANDLE(WINAPI* PEVTRENDER) (EVT_HANDLE, EVT_HANDLE, DWORD, DWORD, PVOID, PDWORD, PDWORD);
-//WINXP����ϵͳ��ע������ϵͳ�¼��ص�
+//WINXP以上系统，注销操作系统事件回调
 typedef HANDLE(WINAPI* PEVTCLOSE) (EVT_HANDLE);
-//WINXP����ϵͳ����ȡ���ڶ�ȡָ���ṩ����Ԫ���ݵľ��: ��ȡ�¼������߾��: EvtOpenPublisherMetadata
+//WINXP以上系统，获取用于读取指定提供程序元数据的句柄: 获取事件发布者句柄: EvtOpenPublisherMetadata
 typedef HANDLE(WINAPI* PEVTOPENPUBLISHERMETADATA) (EVT_HANDLE, LPCWSTR, LPCWSTR, LCID, DWORD);
-//WINXP����ϵͳ��������Ϣ�ַ����ĸ�ʽ�����ڵõ��¼�����������Ϣ: evtFormatMessage
+//WINXP以上系统，设置消息字符串的格式：用于得到事件中文描述信息: evtFormatMessage
 typedef HANDLE(WINAPI* PEVTFORMATMESSAGE) (EVT_HANDLE, EVT_HANDLE, DWORD, DWORD, PEVT_VARIANT, DWORD, DWORD, LPWSTR, PDWORD);
 
 class CSysLogFun;
@@ -39,7 +40,7 @@ enum HOST_AD_SYSLOG_CLASS
 	EVENT_CLASS_Setup
 };
 
-//ϵͳ��־
+//系统日志
 typedef struct  __HOST_AD_SYSLOG_STRUCT
 {
 	__HOST_AD_SYSLOG_STRUCT()
@@ -70,37 +71,38 @@ typedef struct  __HOST_AD_SYSLOG_STRUCT
 			dwEventRecordID = t.dwEventRecordID;
 	};
 #endif
-	DWORD dwEventClass;		//��־��Ϣ�������  -- BASELINE_EVENT_LOG_CLASS,app,system,sec,setup
-	DWORD dwEventType;		//�¼����� - BASELINE_EVENT_LOG_TYPE ,info,warning,error.
-	DWORD dwEventID;		//�¼�ID
-	TCHAR wsEventTime[20];	//ʱ��
-	TCHAR wsEventSourceName[128];	//��Դ
-	TCHAR wsEventDescription[MAX_DESCRIPTION_SIZE];	//���� -- ���ֵ�ǳ��� 1024̫����
-	TCHAR wsEventComputerName[64];	//���������
-	DWORD dwEventRecordID;			//�¼���¼ID
-	DWORD dwLogCount;				//��־����
-	DWORD dwEventTime;				//��־��¼ʱ��,�ڲ�ʹ�ã�ʹ��DWORD�洢
+	DWORD dwEventClass;		//日志信息包括类别  -- BASELINE_EVENT_LOG_CLASS,app,system,sec,setup
+	DWORD dwEventType;		//事件类型 - BASELINE_EVENT_LOG_TYPE ,info,warning,error.
+	DWORD dwEventID;		//事件ID
+	TCHAR wsEventTime[20];	//时间
+	TCHAR wsEventSourceName[128];	//来源
+	TCHAR wsEventDescription[MAX_DESCRIPTION_SIZE];	//描述 -- 这个值非常大 1024太大了
+	TCHAR wsEventComputerName[64];	//计算机名称
+	DWORD dwEventRecordID;			//事件记录ID
+	DWORD dwLogCount;				//日志数量
+	DWORD dwEventTime;				//日志记录时间,内部使用，使用DWORD存储
 }HOST_AD_SYSLOG_STRUCT, * PHOST_AD_SYSLOG_STRUCT;
 
-class CSysLogFun : public Singleton<CSysLogFun> {
+class CSysLogFun : public Singleton<CSysLogFun>
+{
 public:
-	friend Singleton;   //����Ϊ��Ԫ�࣬�Ա�Singleton����˽�й��캯����Ϊ�˷�ֹ�ⲿ�������
+	friend Singleton;   //声明为友元类，以便Singleton访问私有构造函数，为了防止外部构造对象
 public:
 	~CSysLogFun();
 	void InitSysLogFun();
-	BOOL GetSysLogByPsloglist(wstring wsStartDateTime, wstring wsEndDateTime, wstring wsLogClass);   //ͨ��PslogList�����л�ȡ
-	BOOL GetSysLogByEvtSubscribe();																	 //ͨ�����ĵķ�ʽʵʱ��ȡ
-	BOOL GetSysLogByReadEventLog();																	 //ͨ����ȡ�¼���־�ķ�ʽ��ȡ
+	BOOL GetSysLogByPsloglist(wstring wsStartDateTime, wstring wsEndDateTime, wstring wsLogClass);   //通过PslogList命令行获取
+	BOOL GetSysLogByEvtSubscribe();																	 //通过订阅的方式实时获取
+	BOOL GetSysLogByReadEventLog();																	 //通过读取事件日志的方式获取
 	BOOL m_EvtSubscribeThreadExit;
 	BOOL m_ReadSystemEventThreadExit;
 public:
-	PEVTSUBSCRIBE m_pEvtSubScript;							//����ϵͳ��־�¼�
-	PEVTRENDER m_pEvtRender;								//���ڴ��¼�����м����¼���Ϣ
-	PEVTCLOSE m_pEvtClose;									//�ر��¼����
-	PEVTOPENPUBLISHERMETADATA m_pEvtOpenPublisherMetadata;	//��ȡ���ڶ�ȡָ���ṩ����Ԫ���ݵľ��: ��ȡ�¼������߾��
-	PEVTFORMATMESSAGE m_pEvtFormatMessage;					//������Ϣ�ַ����ĸ�ʽ�����ڵõ��¼�����������Ϣ
+	PEVTSUBSCRIBE m_pEvtSubScript;							//订阅系统日志事件
+	PEVTRENDER m_pEvtRender;								//用于从事件句柄中检索事件信息
+	PEVTCLOSE m_pEvtClose;									//关闭事件句柄
+	PEVTOPENPUBLISHERMETADATA m_pEvtOpenPublisherMetadata;	//获取用于读取指定提供程序元数据的句柄: 获取事件发布者句柄
+	PEVTFORMATMESSAGE m_pEvtFormatMessage;					//设置消息字符串的格式：用于得到事件中文描述信息
 
-	//���ĸ�ϵͳ��־�¼����
+	//订阅各系统日志事件句柄
 	EVT_HANDLE m_hEvtHandleApp;
 	EVT_HANDLE m_hEvtHandleSec;
 	EVT_HANDLE m_hEvtHandleSys;

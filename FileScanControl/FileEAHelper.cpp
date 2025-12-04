@@ -1,238 +1,159 @@
 /********************************************************************************
-*		Copyright (C) 2021 Beijing winicssec Technology
-*		All rights reserved
-*
-*		filename : FileEaHelper
-*		description : Œƒº˛∂ÓÕ‚ Ù–‘∞Ô÷˙Œƒº˛£¨∞¸¿®∂¡£¨–¥£¨…æ≥˝µ»
-*		¥ÀŒƒº˛Ω´”√”⁄∞◊√˚µ•ƒ£øÈ£¨‘⁄»Œ“‚ÃÌº”∞◊√˚µ•µΩø‚÷–µƒµÿ∑Ω∂º“™–¥Œƒº˛∂ÓÕ‚ Ù–‘µΩŒƒº˛÷–
-*		Œƒº˛∂ÓÕ‚ Ù–‘∞¸¿®"WLHASH" : xxxxxxxxx,Œƒº˛Hash
-*
-*		created by yong.tan 2024-12-05
-*
-*****************************************************************************/
+ *		Copyright (C) 2021 Beijing winicssec Technology
+ *		All rights reserved
+ *
+ *		filename : FileEaHelper
+ *		description : Êñá‰ª∂È¢ùÂ§ñÂ±ûÊÄßÂ∏ÆÂä©Êñá‰ª∂ÔºåÂåÖÊã¨ËØªÔºåÂÜôÔºåÂà†Èô§Á≠â
+ *		Ê≠§Êñá‰ª∂Â∞ÜÁî®‰∫éÁôΩÂêçÂçïÊ®°ÂùóÔºåÂú®‰ªªÊÑèÊ∑ªÂä†ÁôΩÂêçÂçïÂà∞Â∫ì‰∏≠ÁöÑÂú∞ÊñπÈÉΩË¶ÅÂÜôÊñá‰ª∂È¢ùÂ§ñÂ±ûÊÄßÂà∞Êñá‰ª∂‰∏≠
+ *		Êñá‰ª∂È¢ùÂ§ñÂ±ûÊÄßÂåÖÊã¨"WLHASH" : xxxxxxxxx,Êñá‰ª∂Hash
+ *
+ *		created by yong.tan 2024-12-05
+ *
+ *****************************************************************************/
 
 #include "FileEaHelper.h"
-#pragma warning(disable:4996)
-// …˘√˜ NT API ∫Ø ˝‘≠–Õ
-typedef NTSTATUS(NTAPI* PNtSetEaFile)(
-	IN HANDLE FileHandle,
-	OUT PIO_STATUS_BLOCK IoStatusBlock,
-	IN PVOID Buffer,
-	IN ULONG Length
-	);
+#pragma warning(disable : 4996)
+// Â£∞Êòé NT API ÂáΩÊï∞ÂéüÂûã
+typedef NTSTATUS(NTAPI* PNtSetEaFile)(IN HANDLE FileHandle, OUT PIO_STATUS_BLOCK IoStatusBlock, IN PVOID Buffer, IN ULONG Length);
 
-typedef NTSTATUS(NTAPI* PNtQueryEaFile)(
-	IN HANDLE FileHandle,
-	OUT PIO_STATUS_BLOCK IoStatusBlock,
-	OUT PVOID Buffer,
-	IN ULONG Length,
-	IN BOOLEAN ReturnSingleEntry,
-	IN PVOID EaList OPTIONAL,
-	IN ULONG EaListLength,
-	IN PULONG EaIndex OPTIONAL,
-	IN BOOLEAN RestartScan
-	);
-typedef NTSTATUS(NTAPI* PNtQueryInformationFile)(
-	IN HANDLE FileHandle,
-	OUT PIO_STATUS_BLOCK IoStatusBlock,
-	OUT PVOID FileInformation,
-	IN ULONG Length,
-	IN FILE_INFORMATION_CLASS FileInformationClass
-	);
+typedef NTSTATUS(NTAPI* PNtQueryEaFile)(IN HANDLE FileHandle, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID Buffer, IN ULONG Length, IN BOOLEAN ReturnSingleEntry, IN PVOID EaList OPTIONAL,
+                                        IN ULONG EaListLength, IN PULONG EaIndex OPTIONAL, IN BOOLEAN RestartScan);
+typedef NTSTATUS(NTAPI* PNtQueryInformationFile)(IN HANDLE FileHandle, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID FileInformation, IN ULONG Length, IN FILE_INFORMATION_CLASS FileInformationClass);
 
-FileEAHelper::FileEAHelper()
-{
+FileEAHelper::FileEAHelper() {}
+FileEAHelper::~FileEAHelper() {}
 
+// ÂÜôÂÖ•Êâ©Â±ïÂ±ûÊÄß
+BOOL FileEAHelper::WriteFileExAttr(string strFileName, const char* xattrName, string strAttrValue) {
+    HANDLE          hFile;
+    DWORD           bytesWritten;
+    IO_STATUS_BLOCK io;
+    NTSTATUS        status;
+
+    // Âä†ËΩΩ ntdll.dll
+    HMODULE      hNtdll      = GetModuleHandleA("ntdll.dll");
+    PNtSetEaFile NtSetEaFile = (PNtSetEaFile)GetProcAddress(hNtdll, "NtSetEaFile");
+
+    hFile = CreateFileA(strFileName.c_str(), FILE_WRITE_EA, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        WriteError(("Could not open file {}. Error: {}"), strFileName.c_str(), GetLastError());
+        return FALSE;
+    }
+
+    FILE_FULL_EA_INFORMATION* eaInfo;
+    DWORD                     eaSize = sizeof(FILE_FULL_EA_INFORMATION) + strlen(xattrName) + strAttrValue.length() + 2;
+    eaInfo                           = (FILE_FULL_EA_INFORMATION*)malloc(eaSize);
+
+    eaInfo->NextEntryOffset = 0;
+    eaInfo->Flags           = 0;
+    eaInfo->EaNameLength    = strlen(xattrName);
+    eaInfo->EaValueLength   = strAttrValue.length();
+
+    strcpy((char*)eaInfo->EaName, xattrName);
+    strcpy((char*)eaInfo->EaName + eaInfo->EaNameLength + 1, strAttrValue.c_str());
+
+    status = NtSetEaFile(hFile, &io, eaInfo, eaSize);
+
+    free(eaInfo);
+    CloseHandle(hFile);
+
+    return TRUE;
 }
 
-FileEAHelper::~FileEAHelper()
-{
+// ËØªÂèñÊâ©Â±ïÂ±ûÊÄß
+BOOL FileEAHelper::ReadFileExAttr(string strFileName, const char* xattrName) {
+    HANDLE          hFile;
+    IO_STATUS_BLOCK ioStatus;
+    NTSTATUS        status;
+    char            buffer[4096];
 
+    // Âä†ËΩΩ ntdll.dll
+    HMODULE        hNtdll        = GetModuleHandleA("ntdll.dll");
+    PNtQueryEaFile NtQueryEaFile = (PNtQueryEaFile)GetProcAddress(hNtdll, "NtQueryEaFile");
+
+    hFile = CreateFileA(strFileName.c_str(), FILE_READ_EA, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+
+    if (hFile == INVALID_HANDLE_VALUE) {
+        WriteError(("Could not open file {}. Error: {}"), strFileName.c_str(), GetLastError());
+        return FALSE;
+    }
+
+    // Êü•ËØ¢EA
+    status = NtQueryEaFile(hFile, &ioStatus, buffer, sizeof(buffer), FALSE, NULL, 0, NULL, TRUE);
+
+    if (0 == status) {
+        PFILE_FULL_EA_INFORMATION eaInfo = (PFILE_FULL_EA_INFORMATION)buffer;
+        while (eaInfo) {
+            char nameBuf[256] = {0};
+            strncpy_s(nameBuf, eaInfo->EaName, eaInfo->EaNameLength);
+
+            if (_stricmp(nameBuf, xattrName) == 0) {
+                char valueBuf[4096] = {0};
+                strncpy_s(valueBuf, eaInfo->EaName + eaInfo->EaNameLength + 1, eaInfo->EaValueLength);
+                WriteError(("EA {} = {}"), nameBuf, valueBuf);
+                break;
+            }
+
+            if (eaInfo->NextEntryOffset == 0) {
+                break;
+            }
+            eaInfo = (PFILE_FULL_EA_INFORMATION)((char*)eaInfo + eaInfo->NextEntryOffset);
+        }
+    } else {
+        WriteError(("Failed to query EA. Status: {}"), status);
+    }
+    CloseHandle(hFile);
+
+    return TRUE;
 }
 
+#define FILE_NEED_EA 0x00000080
+NTSTATUS FileEAHelper::DeleteEa(HANDLE FileHandle, const char* xattrName) {
+    NTSTATUS                  status;
+    FILE_FULL_EA_INFORMATION* eaInfo;
 
+    // Âä†ËΩΩ ntdll.dll
+    HMODULE      hNtdll      = GetModuleHandleA("ntdll.dll");
+    PNtSetEaFile NtSetEaFile = (PNtSetEaFile)GetProcAddress(hNtdll, "NtSetEaFile");
 
-// –¥»Î¿©’π Ù–‘
-BOOL FileEAHelper::WriteFileExAttr(string strFileName, const char *xattrName, string strAttrValue) 
-{
-	HANDLE hFile;
-	DWORD bytesWritten;
-	IO_STATUS_BLOCK io;
-	NTSTATUS status;
+    DWORD eaSize = sizeof(FILE_FULL_EA_INFORMATION) + strlen(xattrName) + 1;
+    eaInfo       = (FILE_FULL_EA_INFORMATION*)malloc(eaSize);
 
-	// º”‘ÿ ntdll.dll
-	HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
-	PNtSetEaFile NtSetEaFile = (PNtSetEaFile)GetProcAddress(hNtdll, "NtSetEaFile");
+    eaInfo->NextEntryOffset = 0;
+    eaInfo->Flags           = 0;
+    eaInfo->EaNameLength    = strlen(xattrName);
+    eaInfo->EaValueLength   = 0;
 
+    strcpy_s((char*)eaInfo->EaName, eaInfo->EaNameLength, xattrName);
 
-	hFile = CreateFileA(strFileName.c_str(),
-		FILE_WRITE_EA,
-		0,
-		NULL,
-		OPEN_EXISTING,
-		FILE_FLAG_BACKUP_SEMANTICS,
-		NULL);
+    IO_STATUS_BLOCK ioStatus;
+    status = NtSetEaFile(FileHandle, &ioStatus, eaInfo, eaSize);
 
-	if (hFile == INVALID_HANDLE_VALUE) 
-	{
-		WriteError(("Could not open file {}. Error: {}"), strFileName.c_str(), GetLastError());
-		return FALSE;
-	}
-
-	FILE_FULL_EA_INFORMATION *eaInfo;
-	DWORD eaSize = sizeof(FILE_FULL_EA_INFORMATION) + strlen(xattrName) + strAttrValue.length() + 2;
-	eaInfo = (FILE_FULL_EA_INFORMATION *)malloc(eaSize);
-
-	eaInfo->NextEntryOffset = 0;
-	eaInfo->Flags = 0;
-	eaInfo->EaNameLength = strlen(xattrName);
-	eaInfo->EaValueLength = strAttrValue.length();
-
-	strcpy((char*)eaInfo->EaName,  xattrName);
-	strcpy((char*)eaInfo->EaName + eaInfo->EaNameLength + 1, strAttrValue.c_str());
-
-	status = NtSetEaFile(hFile,&io,eaInfo,eaSize);
-
-
-	free(eaInfo);
-	CloseHandle(hFile);
-
-	return TRUE;
+    free(eaInfo);
+    return status;
 }
+// ËØªÂèñÊâ©Â±ïÂ±ûÊÄß
+BOOL FileEAHelper::DeleteFileExAttr(const char* filename, const char* xattrName) {
+    HANDLE   hFile;
+    NTSTATUS status;
 
-// ∂¡»°¿©’π Ù–‘
-BOOL FileEAHelper::ReadFileExAttr(string strFileName, const char *xattrName) 
-{
-	HANDLE hFile;
-	IO_STATUS_BLOCK ioStatus;
-	NTSTATUS status;
-	char buffer[4096];
+    hFile = CreateFileA(filename, FILE_WRITE_EA | FILE_READ_EA, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 
-	// º”‘ÿ ntdll.dll
-	HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
-	PNtQueryEaFile NtQueryEaFile = (PNtQueryEaFile)GetProcAddress(hNtdll, "NtQueryEaFile");
+    if (hFile == INVALID_HANDLE_VALUE) {
+        WriteError(("Could not open file '{}'. Error: {}"), filename, GetLastError());
+        return FALSE;
+    }
 
-	hFile = CreateFileA(strFileName.c_str(),
-		FILE_READ_EA,
-		FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL,
-		OPEN_EXISTING,
-		FILE_FLAG_BACKUP_SEMANTICS,
-		NULL);
+    // Êü•ËØ¢EA
+    status = DeleteEa(hFile, xattrName);
 
-	if (hFile == INVALID_HANDLE_VALUE) 
-	{
-		WriteError(("Could not open file {}. Error: {}"), strFileName.c_str(), GetLastError());
-		return FALSE;
-	}
+    if (0 == status) {
+        WriteInfo(("suc to DeleteEa EA. Status: {}"), status);
+    } else {
+        WriteError(("suc to DeleteEa EA. Status: {}"), status);
+    }
 
-	// ≤È—ØEA
-	status = NtQueryEaFile(hFile,
-		&ioStatus,
-		buffer,
-		sizeof(buffer),
-		FALSE,
-		NULL,
-		0,
-		NULL,
-		TRUE);
-
-	if (0 == status) 
-	{
-		PFILE_FULL_EA_INFORMATION eaInfo = (PFILE_FULL_EA_INFORMATION)buffer;
-		while (eaInfo) 
-		{
-			char nameBuf[256] = { 0 };
-			strncpy_s(nameBuf, eaInfo->EaName, eaInfo->EaNameLength);
-
-			if (_stricmp(nameBuf, xattrName) == 0) 
-			{
-				char valueBuf[4096] = { 0 };
-				strncpy_s(valueBuf, eaInfo->EaName + eaInfo->EaNameLength + 1, eaInfo->EaValueLength);
-				WriteError(("EA {} = {}"), nameBuf, valueBuf);
-				break;
-			}
-
-			if (eaInfo->NextEntryOffset == 0) 
-			{
-				break;
-			}
-			eaInfo = (PFILE_FULL_EA_INFORMATION)((char*)eaInfo + eaInfo->NextEntryOffset);
-		}
-	}
-	else 
-	{
-		WriteError(("Failed to query EA. Status: {}"),status);
-	}
-	CloseHandle(hFile);
-
-	return TRUE;
+    CloseHandle(hFile);
+    return TRUE;
 }
-
-#define FILE_NEED_EA                    0x00000080
-NTSTATUS FileEAHelper::DeleteEa(HANDLE FileHandle, const char* xattrName)
-{
-	NTSTATUS status;
-	FILE_FULL_EA_INFORMATION *eaInfo;
-
-	// º”‘ÿ ntdll.dll
-	HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
-	PNtSetEaFile NtSetEaFile = (PNtSetEaFile)GetProcAddress(hNtdll, "NtSetEaFile");
-
-	DWORD eaSize = sizeof(FILE_FULL_EA_INFORMATION) + strlen(xattrName) + 1 ;
-	eaInfo = (FILE_FULL_EA_INFORMATION *)malloc(eaSize);
-
-	eaInfo->NextEntryOffset = 0;
-	eaInfo->Flags = 0;
-	eaInfo->EaNameLength = strlen(xattrName);
-	eaInfo->EaValueLength = 0;
-
-	strcpy_s((char*)eaInfo->EaName, eaInfo->EaNameLength, xattrName);
-
-	IO_STATUS_BLOCK ioStatus;
-	status =  NtSetEaFile(
-		FileHandle,
-		&ioStatus,
-		eaInfo,
-		eaSize
-		);
-
-	free(eaInfo);
-	return status;
-}
-// ∂¡»°¿©’π Ù–‘
-BOOL FileEAHelper::DeleteFileExAttr(const char *filename, const char *xattrName) 
-{
-	HANDLE hFile;
-	NTSTATUS status;
-
-	hFile = CreateFileA(filename,
-		FILE_WRITE_EA|FILE_READ_EA,
-		0,
-		NULL,
-		OPEN_EXISTING,
-		FILE_FLAG_BACKUP_SEMANTICS,
-		NULL);
-
-	if (hFile == INVALID_HANDLE_VALUE) 
-	{
-		WriteError(("Could not open file '{}'. Error: {}"), filename, GetLastError());
-		return FALSE;
-	}
-
-	// ≤È—ØEA
-	status = DeleteEa(hFile,xattrName);
-
-	if (0 == status) 
-	{
-		WriteInfo(("suc to DeleteEa EA. Status: {}"), status);
-	}
-	else 
-	{
-		WriteError(("suc to DeleteEa EA. Status: {}"), status);
-	}
-
-	CloseHandle(hFile);
-	return TRUE;
-}
-
