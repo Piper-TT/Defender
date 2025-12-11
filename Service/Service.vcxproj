@@ -74,6 +74,9 @@
     <IncludePath>../include/Boost/x64/include/boost-1_80;$(IncludePath)</IncludePath>
     <LibraryPath>../include/Boost/x64/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>..\bin\win\release\x86_64</OutDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
