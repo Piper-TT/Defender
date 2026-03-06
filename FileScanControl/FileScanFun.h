@@ -30,7 +30,5 @@ public:
 public:
 	CPEFileValidate m_pefilevalidate;
 	BOOL m_bStopSearch;
-private:
-	PECacheHelper* m_PeCacheHelper;
+	PECacheHelper* m_PeCacheHelper = nullptr;
 };
-
