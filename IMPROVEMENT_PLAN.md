@@ -26,9 +26,9 @@ Client.exe ──IPC──▶ Service.exe ──▶ DLL模块(IComponent接口)
 |---|------|------|------|
 | 1 | 测试代码 `multiply_return` 未清理 | FileScanFun.cpp | ⬜ 待处理 |
 | 2 | 硬编码测试 `md5.exe` | FileScanFun.cpp | ⬜ 待处理 |
-| 3 | 内存泄漏 - CFileScanFun | FileScan.cpp | ⬜ 待处理 |
-| 4 | 内存泄漏 - CFirewallBase | FireWallControl.cpp | ⬜ 待处理 |
-| 5 | 线程池未实际使用 | FileScanFun.cpp | ⬜ 待处理 |
+| 3 | 内存泄漏 - CFileScanFun | FileScan.cpp | ✅ 已完成 |
+| 4 | 内存泄漏 - CFirewallBase | FireWallControl.cpp | ✅ 已完成 |
+| 5 | 线程池未实际使用 | FileScanFun.cpp | ✅ 已完成 |
 
 ### 🟡 中优先级
 
@@ -59,3 +59,6 @@ Client.exe ──IPC──▶ Service.exe ──▶ DLL模块(IComponent接口)
 ---
 
 *此文档由小P 🐾 维护，随项目进展更新*
+
+
+
