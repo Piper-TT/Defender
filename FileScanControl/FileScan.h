@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <windows.h>
 #include <tchar.h>
 #include <string>
@@ -21,6 +21,10 @@ public:
 	BOOL EnableFunction();
 	BOOL DisableFunction();
 	BOOL DispatchMessages(IPC_MSG_DATA* pIpcMsg);
+
+private:
+	CFileScanFun* m_pFileScanFun = nullptr;
 };
 
 extern "C" __declspec(dllexport) IComponent * GetComInstance();
+

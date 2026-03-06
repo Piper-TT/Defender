@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <windows.h>
 #include <tchar.h>
 #include <string>
@@ -25,6 +25,7 @@ public:
 	BOOL CheckIsPEFile(const std::wstring wstrFilePath);
 	TCHAR* GetHashString(const unsigned char* pcSrc, DWORD dwSrcLen, TCHAR* pszDst, DWORD dwDstLen);
 	BOOL GetFileInfoEx(const std::wstring wstrFullFileName, wstring& wstrHashCode, ULONGLONG& FileSize, ULONGLONG& LastWriteTime);
+	void StopSearch() { m_bStopSearch = TRUE; }
 
 public:
 	CPEFileValidate m_pefilevalidate;
@@ -32,3 +33,4 @@ public:
 private:
 	PECacheHelper* m_PeCacheHelper;
 };
+

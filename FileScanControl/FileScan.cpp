@@ -1,10 +1,15 @@
-#include "FileScan.h"
+﻿#include "FileScan.h"
 
 CFileScan::CFileScan() {
     return;
 }
 
-CFileScan::~CFileScan() {}
+CFileScan::~CFileScan() {
+    if (m_pFileScanFun) {
+        delete m_pFileScanFun;
+        m_pFileScanFun = nullptr;
+    }
+}
 
 CFileScan& CFileScan::GetInstance() {
     static CFileScan instance;
@@ -20,13 +25,20 @@ IComponent* CFileScan::Register() {
 }
 
 BOOL CFileScan::EnableFunction() {
-    // 开启文件扫描功能,非单例
-    CFileScanFun* FileScan = new CFileScanFun();
-    FileScan->EnableScanFileFunction();
+    // 开启文件扫描功能
+    if (!m_pFileScanFun) {
+        m_pFileScanFun = new CFileScanFun();
+    }
+    m_pFileScanFun->EnableScanFileFunction();
     return 0;
 }
 
 BOOL CFileScan::DisableFunction() {
+    if (m_pFileScanFun) {
+        m_pFileScanFun->StopSearch();
+        delete m_pFileScanFun;
+        m_pFileScanFun = nullptr;
+    }
     return 0;
 }
 

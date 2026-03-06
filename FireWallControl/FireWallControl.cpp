@@ -1,4 +1,4 @@
-// FireWallControl.cpp : 定义 DLL 的导出函数。
+﻿// FireWallControl.cpp : 瀹氫箟 DLL 鐨勫鍑哄嚱鏁般€?
 //
 
 #include "pch.h"
@@ -9,6 +9,10 @@ CFireWallControl::CFireWallControl() {}
 
 CFireWallControl::~CFireWallControl() {
     WriteInfo("CFireWallControlClass Buffer Free");
+    if (m_pFirewallBase) {
+        delete m_pFirewallBase;
+        m_pFirewallBase = nullptr;
+    }
 }
 
 CFireWallControl& CFireWallControl::GetInstance() {
@@ -31,8 +35,8 @@ BOOL CFireWallControl::EnableFunction() {
     GetWindowsVersion.SeGetWindowsVersion(nWindowsVersion, bWin64);
 
     if (nWindowsVersion == WIN_XP) {
-        // 2000不考虑了
-        // XP环境
+        // 2000涓嶈€冭檻浜?
+        // XP鐜
         m_pFirewallBase = CFirewallBase::factory("WinXP");
     } else {
         m_pFirewallBase = CFirewallBase::factory("Win7");
